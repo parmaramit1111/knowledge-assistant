@@ -43,32 +43,34 @@ Knowledge Assistant enables users to upload documents, build a searchable knowle
 
 ## Project Structure
 
-(We'll add this after finalizing the folders.)
+```text
+knowledge-assistant/
+├── backend/
+├── frontend/
+├── docs/
+├── samples/
+├── scripts/
+├── storage/
+└── README.md
+```
+
+---
+
+## Documentation
+
+Detailed project documentation is available in the `docs` directory.
+
+- [Architecture](docs/architecture.md)
+- [Setup Guide](docs/setup.md)
+- [API Reference](docs/api.md)
+- [Roadmap](docs/roadmap.md)
+- [Engineering Decisions](docs/decisions.md)
 
 ---
 
 ## Getting Started
 
-(To be added.)
-
----
-
-## Roadmap
-
-### Version 1
-- Document Upload
-- RAG Pipeline
-- Chat Interface
-
-### Future Enhancements
-- Multi-document collections
-- Authentication
-- Conversation history
-- Document summarization
-- Keyword extraction
-- REST API improvements
-
----
+Project setup instructions will be added as development progresses.
 
 ## License
 
