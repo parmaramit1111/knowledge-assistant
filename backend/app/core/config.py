@@ -1,3 +1,5 @@
+from typing import Literal
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,6 +10,8 @@ class Settings(BaseSettings):
 
     api_prefix: str = "/api"
     api_version: str = "v1"
+
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
     model_config = SettingsConfigDict(
         env_file=".env",
