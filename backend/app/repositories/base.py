@@ -54,6 +54,17 @@ class BaseRepository(Generic[T]):
 
         return result.scalar_one_or_none()
 
+    async def find(self, *conditions, limit: int,) -> list[T]:
+        statement = (
+            select(self._model)
+                .where(*conditions)
+                .limit(limit)
+        )
+
+        result = await self._session.execute(statement)
+
+        return list(result.scalars())
+
     async def get_all(self) -> list[T]:
         statement = select(self._model)
 

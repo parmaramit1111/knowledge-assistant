@@ -1,7 +1,11 @@
 from enum import Enum
 from sqlalchemy import String, Enum as SqlEnum
-from sqlalchemy.orm import Mapped, mapped_column
-from .base import BaseEntity
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from app.models.base import BaseEntity
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.models.parsed_document import ParsedDocument
 
 class DocumentStatus(str, Enum):
     UPLOADED = "UPLOADED"
@@ -72,4 +76,9 @@ class Document(BaseEntity):
         ),
         nullable=False,
         default=EmbeddingStatus.PENDING,
+    )
+
+    # Optional: Python-side relationship definition
+    parsed_document: Mapped["ParsedDocument"] = relationship(
+        back_populates="document",
     )

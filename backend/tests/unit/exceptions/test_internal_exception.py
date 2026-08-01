@@ -1,6 +1,7 @@
 from http import HTTPStatus
 from app.core.exceptions.base import AppException
 from app.core.exceptions.internal import InternalServerException
+from app.schemas.api_response import ResponseCode
 
 def test_internal_exception_instance_type():
     """Verify that InternalServerException inherits from AppException."""
@@ -36,7 +37,7 @@ def test_internal_exception_to_dict_returns_expected_values():
     result_dict = exc.to_dict()
 
     # Assert
-    assert result_dict["error"] == "INTERNAL_ERROR"
+    assert result_dict["error"] == ResponseCode.INTERNAL_SERVER_ERROR
     assert result_dict["detail"] == expected_detail
     assert result_dict["status_code"] == HTTPStatus.INTERNAL_SERVER_ERROR.value
     assert result_dict["extra"] == expected_extra
