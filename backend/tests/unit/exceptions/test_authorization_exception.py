@@ -1,6 +1,6 @@
 from http import HTTPStatus
-from app.exceptions.base import AppException
-from app.exceptions.authorization import UnauthorizedException
+from app.core.exceptions.base import AppException
+from app.core.exceptions.authorization import UnauthorizedException
 
 def test_authorization_exception_instance_type():
     """Verify that UnauthorizedException inherits from AppException."""

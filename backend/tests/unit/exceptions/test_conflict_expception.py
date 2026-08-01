@@ -1,6 +1,6 @@
 from http import HTTPStatus
-from app.exceptions.base import AppException
-from app.exceptions.conflict import ConflictException
+from app.core.exceptions.base import AppException
+from app.core.exceptions.conflict import ConflictException
 
 def test_conflict_exception_instance_type():
     """Verify that ConflictException inherits from AppException."""

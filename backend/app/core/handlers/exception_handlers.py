@@ -2,7 +2,8 @@ from http import HTTPStatus
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
-from app.exceptions.base import AppException
+from app.schemas.response_factory import ResponseFactory
+from app.core.exceptions.base import AppException
 
 def register_exception_handlers(app: FastAPI) -> None:
     """
@@ -21,9 +22,14 @@ def register_exception_handlers(app: FastAPI) -> None:
         Returns:
             JSONResponse: A JSON response with the error details.
         """
+        response = ResponseFactory.error(
+            code=exc.code,
+            message=exc.detail,
+        )
+
         return JSONResponse(
             status_code=exc.status_code.value,
-            content=exc.to_dict(),
+            content=response.model_dump(),
         )
 
     @app.exception_handler(Exception)
@@ -40,11 +46,9 @@ def register_exception_handlers(app: FastAPI) -> None:
         """
 
         # TODO: Log unexpected exceptions with stack trace.
+        response = ResponseFactory.internal_error()
+
         return JSONResponse(
             status_code=HTTPStatus.INTERNAL_SERVER_ERROR.value,
-            content={
-                "error": "INTERNAL_ERROR",
-                "detail": "An unexpected error occurred",
-                "status_code": HTTPStatus.INTERNAL_SERVER_ERROR.value,
-            },
+            content=response.model_dump(),
         )

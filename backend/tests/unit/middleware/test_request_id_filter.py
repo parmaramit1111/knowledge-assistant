@@ -1,7 +1,7 @@
 import uuid
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-from app.middleware.request_id import RequestIdMiddleware, REQUEST_ID_HEADER
+from app.core.middleware.request_id import RequestIdMiddleware, REQUEST_ID_HEADER_NAME
 
 # Helper to spin up a clean test instance
 def create_test_app():
@@ -19,12 +19,12 @@ def test_middleware_uses_provided_request_id():
     custom_id = str(uuid.uuid4())
 
     # Send request with a pre-defined request ID
-    response = client.get("/", headers={REQUEST_ID_HEADER: custom_id})
+    response = client.get("/", headers={REQUEST_ID_HEADER_NAME: custom_id})
 
     assert response.status_code == 200
-    assert REQUEST_ID_HEADER in response.headers
+    assert REQUEST_ID_HEADER_NAME in response.headers
     # Assert exact equality instead of >=
-    assert response.headers[REQUEST_ID_HEADER] == custom_id
+    assert response.headers[REQUEST_ID_HEADER_NAME] == custom_id
 
 def test_middleware_generates_new_id_if_missing():
     client = create_test_app()
@@ -33,10 +33,10 @@ def test_middleware_generates_new_id_if_missing():
     response = client.get("/")
 
     assert response.status_code == 200
-    assert REQUEST_ID_HEADER in response.headers
+    assert REQUEST_ID_HEADER_NAME in response.headers
 
     # Verify that the generated value is a valid UUID
-    generated_id = response.headers[REQUEST_ID_HEADER]
+    generated_id = response.headers[REQUEST_ID_HEADER_NAME]
     try:
         uuid.UUID(generated_id, version=4)
     except ValueError:

@@ -14,12 +14,4 @@ class UploadResponse(BaseModel):
 
     size: int
 
-    uploaded_at: datetime
-
     message: str = "Document uploaded successfully."
-
-class IngestionRequest(BaseModel):
-    pass
-
-class IngestionResponse(BaseModel):
-    pass

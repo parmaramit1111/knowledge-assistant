@@ -1,5 +1,6 @@
 from typing import Any, Optional
 from http import HTTPStatus
+from app.schemas.api_response import ResponseCode
 
 class AppException(Exception):
     """Base exception for the entire application."""
@@ -9,7 +10,7 @@ class AppException(Exception):
         status_code: HTTPStatus,
         detail: str,
         *,
-        code: str,
+        code: ResponseCode,
         extra: Optional[dict[str, Any]] = None,
     ) -> None:
         self.status_code = status_code
@@ -33,19 +34,18 @@ class StorageException(AppException):
     """Exceptions related to storage operations."""
 
     STATUS: HTTPStatus = HTTPStatus.INTERNAL_SERVER_ERROR
-    CODE: str = "INTERNAL_ERROR"
 
     def __init__(self, detail: str = "Storage operation failed", *, extra: Optional[dict[str, Any]] = None) -> None:
         super().__init__(
             status_code=self.STATUS,
             detail=detail,
-            code=self.CODE,
+            code=ResponseCode.INTERNAL_SERVER_ERROR,
             extra=extra
         )
 
 class CustomException(AppException):
     """Custom exceptions."""
-    def __init__(self, status_code: HTTPStatus, detail: str, code: str, *, extra: Optional[dict[str, Any]] = None) -> None:
+    def __init__(self, status_code: HTTPStatus, detail: str, code: ResponseCode, *, extra: Optional[dict[str, Any]] = None) -> None:
         super().__init__(
             status_code=status_code,
             detail=detail,

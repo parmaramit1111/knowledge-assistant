@@ -1,6 +1,6 @@
 from http import HTTPStatus
-from app.exceptions.base import AppException
-from app.exceptions.authorization import ForbiddenException
+from app.core.exceptions.base import AppException
+from app.core.exceptions.authorization import ForbiddenException
 
 def test_forbidden_exception_instance_type():
     """Verify that ForbiddenException inherits from AppException."""

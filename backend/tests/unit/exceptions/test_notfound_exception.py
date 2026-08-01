@@ -1,6 +1,6 @@
 from http import HTTPStatus
-from app.exceptions.base import AppException
-from app.exceptions.not_found import ResourceNotFoundException
+from app.core.exceptions.base import AppException
+from app.core.exceptions.not_found import ResourceNotFoundException
 
 def test_not_found_exception_instance_type():
     """Verify that ResourceNotFoundException inherits from AppException."""

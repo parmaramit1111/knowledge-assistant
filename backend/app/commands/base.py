@@ -7,5 +7,6 @@ T = TypeVar("T")
 class Command(ABC, Generic[T]):
 
     @abstractmethod
-    def execute(self) -> T:
-        pass
+    async def execute(self) -> T:
+        """Execute the command."""
+        raise NotImplementedError

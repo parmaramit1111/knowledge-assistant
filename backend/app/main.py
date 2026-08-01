@@ -1,16 +1,20 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 
 from app.api.router import router
 from app.core.config import settings
-from app.middleware import register_middlewares
+from app.core.middleware import register_middlewares
+from app.core.lifecycle import lifespan
 from app.core.logging import setup_logging
-from app.handlers.exception_handlers import register_exception_handlers
+from app.core.handlers.exception_handlers import register_exception_handlers
 
 setup_logging()
 
 app = FastAPI(
     title=settings.app_name,
     version=settings.app_version,
+    lifespan=lifespan,
 )
 
 # Register all exception handlers from the handlers folder

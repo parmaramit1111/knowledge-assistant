@@ -1,45 +1,78 @@
 from pathlib import Path
 from uuid import uuid4
 
-from app.commands.upload.upload_document import UploadDocumentCommand
-from app.core.config import settings
-from app.models.document import Document
+from fastapi import UploadFile
 
+from app.core.config import settings
+from app.core.dependencies.repository_factory import RepositoryFactory
+from app.core.exceptions.base import StorageException
+from app.core.exceptions.validation import ValidationException
+from app.models.document import (
+    Document,
+    DocumentStatus,
+    ParseStatus,
+    EmbeddingStatus,
+)
+from app.schemas.document import UploadResponse
 
 class DocumentUploadService:
-    async def execute(self, command: UploadDocumentCommand) -> Document:
-        file = command.file
+    """
+    Handles document upload business logic.
+    """
 
-        # Validation
-        if file.content_type not in settings.allowed_content_types:
-            raise ValueError("Unsupported file type.")
+    def __init__(self) -> None:
+        self.repository =  RepositoryFactory.document_repository()
+
+    async def upload(
+        self,
+        file: UploadFile,
+    ) -> UploadResponse:
+
+        content_type = file.content_type or ""
+
+        if content_type not in settings.allowed_content_types:
+            raise ValidationException("Unsupported file type.")
 
         contents = await file.read()
 
         if not contents:
-            raise ValueError("Uploaded file is empty.")
+            raise ValidationException("Uploaded file is empty.")
 
         if len(contents) > settings.max_upload_size:
-            raise ValueError("File size exceeds the allowed limit.")
+            raise ValidationException("File size exceeds the allowed limit.")
 
-        # Generate identifiers
-        document_id = uuid4()
-        filename = f"{document_id}.pdf"
+        extension = Path(file.filename or "").suffix.lower()
 
-        # Storage
+        if not extension:
+            raise ValidationException("File extension is missing.")
+
+        filename = f"{uuid4()}{extension}"
+
         upload_directory = Path(settings.upload_directory)
-        upload_directory.mkdir(parents=True, exist_ok=True)
+        upload_directory.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
         storage_path = upload_directory / filename
 
-        storage_path.write_bytes(contents)
+        try:
+            storage_path.write_bytes(contents)
 
-        # Domain Model
-        return Document(
-            id=document_id,
+        except OSError as ex:
+            raise StorageException() from ex
+
+        document = Document(
             filename=filename,
             original_filename=file.filename or filename,
-            content_type=file.content_type,
+            content_type=content_type,
             size=len(contents),
-            storage_path=storage_path,
+            storage_path=str(storage_path),
+            document_status=DocumentStatus.UPLOADED,
+            parse_status=ParseStatus.PENDING,
+            embedding_status=EmbeddingStatus.PENDING,
         )
+
+        document = await self.repository.add(document)
+
+        return UploadResponse.model_validate(document)

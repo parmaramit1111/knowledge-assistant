@@ -1,6 +1,6 @@
 from http import HTTPStatus
-from app.exceptions.base import AppException
-from app.exceptions.internal import InternalServerException
+from app.core.exceptions.base import AppException
+from app.core.exceptions.internal import InternalServerException
 
 def test_internal_exception_instance_type():
     """Verify that InternalServerException inherits from AppException."""

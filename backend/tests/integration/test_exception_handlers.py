@@ -2,10 +2,10 @@ from http import HTTPStatus
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.handlers.exception_handlers import register_exception_handlers
-from app.exceptions.validation import ValidationException
-from app.exceptions.not_found import ResourceNotFoundException
-from app.exceptions.authorization import UnauthorizedException
+from app.core.handlers.exception_handlers import register_exception_handlers
+from app.core.exceptions.validation import ValidationException
+from app.core.exceptions.not_found import ResourceNotFoundException
+from app.core.exceptions.authorization import UnauthorizedException
 
 # Update your test setup helper function:
 def create_exception_test_client() -> TestClient:

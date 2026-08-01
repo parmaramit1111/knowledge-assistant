@@ -1,6 +1,6 @@
 import pytest
 from http import HTTPStatus
-from app.exceptions.base import AppException
+from app.core.exceptions.base import AppException
 
 def test_app_exception_stores_status_code():
     """Verify that the exception correctly stores the HTTP status code."""

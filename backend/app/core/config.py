@@ -1,4 +1,3 @@
-from pydantic import Field, field_validator
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -9,6 +8,14 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     app_env: str = "development"
 
+    database_url: str = ""
+    database_echo: bool = False
+    database_pool_size: int = 20
+    database_max_overflow: int = 10
+    database_pool_timeout: int = 30
+    database_pool_recycle: int = 1800
+    database_pool_pre_ping: bool = True
+
     api_prefix: str = "/api"
     api_version: str = "v1"
 
@@ -16,14 +23,33 @@ class Settings(BaseSettings):
 
     upload_directory: str = ""
     max_upload_size: int = 20 * 1024 * 1024
-    allowed_content_types: list[str] = Field(default_factory=list)
 
-    @field_validator("allowed_content_types", mode="before")
-    @classmethod
-    def parse_allowed_content_types(cls, value):
-        if isinstance(value, str):
-            return [item.strip() for item in value.split(",") if item.strip()]
-        return value
+    allowed_content_types: str = ""
+    @property
+    def allowed_content_types_list(self) -> list[str]:
+        return [
+            item.strip()
+            for item in self.allowed_content_types.split(",")
+            if item.strip()
+        ]
+
+    allowed_extensions: str = ""
+    @property
+    def allowed_extensions_list(self) -> list[str]:
+        return [
+            item.strip()
+            for item in self.allowed_extensions.split(",")
+            if item.strip()
+        ]
+
+    supported_llm_providers: str = ""
+    @property
+    def supported_llm_providers_list(self) -> list[str]:
+        return [
+            item.strip()
+            for item in self.supported_llm_providers.split(",")
+            if item.strip()
+        ]
 
     model_config = SettingsConfigDict(
         env_file=".env",

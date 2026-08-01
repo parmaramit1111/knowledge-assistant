@@ -1,6 +1,6 @@
 from http import HTTPStatus
-from app.exceptions.base import AppException
-from app.exceptions.validation import ValidationException
+from app.core.exceptions.base import AppException
+from app.core.exceptions.validation import ValidationException
 
 def test_validation_exception_instance_type():
     """Verify that ValidationException inherits from AppException."""

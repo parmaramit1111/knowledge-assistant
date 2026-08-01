@@ -3,9 +3,12 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import Response
 from starlette.requests import Request
-from app.core.logging import request_id_context
+from app.core.middleware.request_context import (
+    request_id_context,
+    set_request_id,
+)
 
-REQUEST_ID_HEADER = "X-Request-ID"
+REQUEST_ID_HEADER_NAME = "X-Request-ID"
 
 class RequestIdMiddleware(BaseHTTPMiddleware):
     """
@@ -31,15 +34,15 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
             If a request ID is already present in the request headers,
             it will be used instead of generating a new one.
         """
-        request_id = request.headers.get(REQUEST_ID_HEADER) or str(uuid.uuid4())
-        token = request_id_context.set(request_id)
+        request_id = request.headers.get(REQUEST_ID_HEADER_NAME) or str(uuid.uuid4())
+        token = set_request_id(request_id)
 
         # Make it available downstream
         request.state.request_id = request_id
 
         try:
             response = await call_next(request)
-            response.headers[REQUEST_ID_HEADER] = request_id
+            response.headers[REQUEST_ID_HEADER_NAME] = request_id
             return response
         finally:
             request_id_context.reset(token)
