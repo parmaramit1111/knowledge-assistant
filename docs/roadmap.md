@@ -1,110 +1,107 @@
-# Knowledge Assistant Roadmap
+# Project Roadmap
 
-This roadmap outlines the planned milestones for building the Knowledge Assistant project. The project is developed incrementally, with each milestone resulting in a working and testable application.
+## Phase 1 — Backend Foundation ✅
 
----
+Status: Completed
 
-## Milestone 0 – Repository & Architecture ✅
+### Completed
 
-- Repository initialization
-- Branching strategy
-- Project structure
-- Documentation
-- Initial README
-
----
-
-## Milestone 1 – Project Initialization
-
-### Backend
-
-- FastAPI setup
-- Application configuration
-- Health endpoint
-- Logging
-- Environment configuration
-
-### Frontend
-
-- React + Vite setup
-- Basic layout
-- Backend connectivity test
+- [x] FastAPI
+- [x] Project Structure
+- [x] Configuration
+- [x] Logging
+- [x] Global Exception Handling
+- [x] Standard API Response
+- [x] Request ID Middleware
+- [x] Context Management
+- [x] SQLAlchemy Async
+- [x] PostgreSQL
+- [x] Alembic
+- [x] Generic Repository
+- [x] Ambient Transactions
+- [x] CQRS
+- [x] Service Layer
+- [x] Repository Pattern
+- [x] Document Upload API
+- [x] Local File Storage
 
 ---
 
-## Milestone 2 – Document Upload
+## Phase 2 — Document Processing
 
-- PDF upload API
-- File validation
-- Upload management
-- Local storage
+Status: In Progress
 
----
+### Planned
 
-## Milestone 3 – Document Processing
-
-- PDF text extraction
-- Metadata extraction
-- Error handling
-- Processing status
+- [ ] PDF Parser
+- [ ] DOCX Parser
+- [ ] TXT Parser
+- [ ] Metadata Extraction
+- [ ] OCR Support
 
 ---
 
-## Milestone 4 – Text Chunking
+## Phase 3 — Chunking
 
-- Intelligent text chunking
-- Configurable chunk size
-- Overlapping chunks
-- Chunk metadata
-
----
-
-## Milestone 5 – Embeddings & Vector Database
-
-- Sentence Transformers
-- ChromaDB integration
-- Vector indexing
-- Similarity search
+- [ ] Recursive Splitter
+- [ ] Semantic Splitter
+- [ ] Markdown Splitter
+- [ ] Token Splitter
 
 ---
 
-## Milestone 6 – Retrieval-Augmented Generation (RAG)
+## Phase 4 — Embeddings
 
-- Retrieve relevant chunks
-- Prompt construction
-- Ollama integration
-- Grounded AI responses
-
----
-
-## Milestone 7 – Chat Experience
-
-- Chat interface
-- Conversation history
-- Source citations
-- Streaming responses (optional)
+- [ ] Sentence Transformers
+- [ ] Ollama Embeddings
+- [ ] OpenAI Embeddings
+- [ ] ChromaDB Integration
 
 ---
 
-## Milestone 8 – Enhancements
+## Phase 5 — Search
 
-- Multiple document support
-- Search filters
-- Authentication
-- Docker support
-- CI/CD pipeline
-- Unit & integration tests
+- [ ] Similarity Search
+- [ ] Metadata Filters
+- [ ] Hybrid Search
+- [ ] Re-ranking
 
 ---
 
-## Future Ideas
+## Phase 6 — AI Chat
 
-- OCR support
-- DOCX support
-- Markdown support
-- Multi-user workspace
-- Cloud storage
-- PostgreSQL metadata
-- Hybrid search
-- AI document summarization
-- AI keyword extraction
+- [ ] Conversation History
+- [ ] Prompt Builder
+- [ ] Ollama
+- [ ] OpenAI
+- [ ] Anthropic
+
+---
+
+## Phase 7 — Enterprise Features
+
+- [ ] Authentication
+- [ ] Authorization
+- [ ] User Management
+- [ ] Roles & Permissions
+- [ ] Audit Logs
+- [ ] Multi-Tenant Support
+
+---
+
+## Phase 8 — Production Readiness
+
+- [ ] Docker
+- [ ] CI/CD
+- [ ] Unit Tests
+- [ ] Integration Tests
+- [ ] Monitoring
+- [ ] Metrics
+- [ ] Health Checks
+- [ ] Rate Limiting
+
+---
+
+## Long-Term Vision
+
+Become a provider-agnostic enterprise knowledge platform capable of supporting multiple document formats, vector databases, embedding providers, and language models through a modular architecture.

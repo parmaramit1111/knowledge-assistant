@@ -1,0 +1,89 @@
+from typing import Generic, TypeVar
+from uuid import UUID
+
+from sqlalchemy import func, select
+
+from app.models.base import BaseEntity
+from app.core.transaction.context import get_session
+
+T = TypeVar("T", bound=BaseEntity)
+
+
+class BaseRepository(Generic[T]):
+    """
+    Generic repository providing common CRUD operations.
+    """
+
+    def __init__(
+        self,
+        model: type[T],
+    ) -> None:
+        self._session = get_session()
+        self._model = model
+
+    async def add(self, entity: T) -> T:
+        self._session.add(entity)
+        await self._session.flush()
+        await self._session.refresh(entity)
+        return entity
+
+    async def add_many(self, entities: list[T]) -> list[T]:
+        self._session.add_all(entities)
+        await self._session.flush()
+
+        for entity in entities:
+            await self._session.refresh(entity)
+
+        return entities
+
+    async def update(self, entity: T) -> T:
+        await self._session.flush()
+        await self._session.refresh(entity)
+        return entity
+
+    async def delete(self, entity: T) -> None:
+        await self._session.delete(entity)
+
+    async def get_by_id(self, id: UUID) -> T | None:
+        statement = (
+            select(self._model)
+            .where(self._model.id == id)
+        )
+
+        result = await self._session.execute(statement)
+
+        return result.scalar_one_or_none()
+
+    async def get_all(self) -> list[T]:
+        statement = select(self._model)
+
+        result = await self._session.execute(statement)
+
+        return list(result.scalars().all())
+
+    async def exists(self, id: UUID) -> bool:
+        statement = (
+            select(func.count())
+            .select_from(self._model)
+            .where(self._model.id == id)
+        )
+
+        result = await self._session.execute(statement)
+
+        return result.scalar_one() > 0
+
+    async def count(self) -> int:
+        statement = (
+            select(func.count())
+            .select_from(self._model)
+        )
+
+        result = await self._session.execute(statement)
+
+        return result.scalar_one()
+
+    async def flush(self) -> None:
+        await self._session.flush()
+
+    async def refresh(self, entity: T) -> None:
+        await self._session.refresh(entity)
