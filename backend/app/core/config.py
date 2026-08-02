@@ -51,6 +51,11 @@ class Settings(BaseSettings):
             if item.strip()
         ]
 
+    worker_enabled: bool = True
+    worker_poll_interval: int = 5
+    worker_batch_size: int = 10
+    worker_interval_seconds: int = 10
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,

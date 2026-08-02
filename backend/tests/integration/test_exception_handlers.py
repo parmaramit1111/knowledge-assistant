@@ -6,6 +6,7 @@ from app.core.handlers.exception_handlers import register_exception_handlers
 from app.core.exceptions.validation import ValidationException
 from app.core.exceptions.not_found import ResourceNotFoundException
 from app.core.exceptions.authorization import UnauthorizedException
+from app.schemas.api_response import ResponseCode
 
 # Update your test setup helper function:
 def create_exception_test_client() -> TestClient:
@@ -37,12 +38,17 @@ def test_validation_exception_handler():
     response = client.get("/error/validation")
 
     assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY.value
-
     data = response.json()
-    assert "error" in data
-    assert data["detail"] == "Invalid email format"
-    assert data["error"] == "VALIDATION_ERROR"
-    assert data["status_code"] == HTTPStatus.UNPROCESSABLE_ENTITY.value
+
+    assert "code" in data
+    assert data["message"] == "Invalid email format"
+    assert data["code"] == ResponseCode.VALIDATION_ERROR
+    assert data["success"] == False
+
+    # assert "error" in data
+    # assert data["detail"] == "Invalid email format"
+    # assert data["error"] == "VALIDATION_ERROR"
+    # assert data["status_code"] == HTTPStatus.UNPROCESSABLE_ENTITY.value
 
 
 def test_resource_not_found_exception_handler():
@@ -53,10 +59,16 @@ def test_resource_not_found_exception_handler():
     assert response.status_code == HTTPStatus.NOT_FOUND.value
 
     data = response.json()
-    assert "error" in data
-    assert data["detail"] == "User record not found"
-    assert data["error"] == "NOT_FOUND"
-    assert data["status_code"] == HTTPStatus.NOT_FOUND.value
+    assert "code" in data
+    assert data["message"] == "User record not found"
+    assert data["code"] == ResponseCode.NOT_FOUND
+    assert data["success"] == False
+
+
+    # assert "error" in data
+    # assert data["detail"] == "User record not found"
+    # assert data["error"] == ResponseCode.NOT_FOUND
+    # assert data["status_code"] == HTTPStatus.NOT_FOUND.value
 
 
 def test_unauthorized_exception_handler():
@@ -67,11 +79,10 @@ def test_unauthorized_exception_handler():
     assert response.status_code == HTTPStatus.UNAUTHORIZED.value
 
     data = response.json()
-    assert "error" in data
-    assert data["detail"] == "Token expired"
-    assert data["error"] == "UNAUTHORIZED"
-    assert data["status_code"] == HTTPStatus.UNAUTHORIZED.value
-
+    assert "code" in data
+    assert data["message"] == "Token expired"
+    assert data["code"] == ResponseCode.UNAUTHORIZED
+    assert data["success"] == False
 
 def test_unhandled_native_exception_handler():
     """Ensure regular Python exceptions are captured safely under a 500 block."""
@@ -81,7 +92,7 @@ def test_unhandled_native_exception_handler():
     assert response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR.value
 
     data = response.json()
-    assert "error" in data
-    assert data["error"] == "INTERNAL_ERROR"
-    assert data["detail"] == "An unexpected error occurred"
-    assert data["status_code"] == HTTPStatus.INTERNAL_SERVER_ERROR.value
+    assert "code" in data
+    assert data["message"] == "An unexpected error occurred"
+    assert data["code"] == ResponseCode.INTERNAL_SERVER_ERROR
+    assert data["success"] == False
