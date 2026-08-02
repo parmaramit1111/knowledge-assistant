@@ -1,11 +1,12 @@
 import asyncio
-import logging
+from app.core.logging import get_logger
 
 from app.core.config import settings
 from app.workers.base import BaseWorker
 from app.workers.document.document_worker import DocumentWorker
+from app.workers.document.chunk_worker import ChunkWorker
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class Scheduler:
@@ -16,6 +17,7 @@ class Scheduler:
     def __init__(self) -> None:
         self.workers: list[BaseWorker] = [
             DocumentWorker(),
+            ChunkWorker()
         ]
 
     async def start(self) -> None:
