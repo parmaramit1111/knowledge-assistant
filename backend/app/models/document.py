@@ -25,6 +25,12 @@ class EmbeddingStatus(str, Enum):
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
 
+class ChunkStatus(str, Enum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
 class Document(BaseEntity):
     """Document model."""
     __tablename__ = "documents"
@@ -76,6 +82,14 @@ class Document(BaseEntity):
         ),
         nullable=False,
         default=EmbeddingStatus.PENDING,
+    )
+    chunk_status: Mapped[ChunkStatus] = mapped_column(
+        SqlEnum(
+            ChunkStatus,
+            name="chunk_status",
+        ),
+        nullable=False,
+        default=ChunkStatus.PENDING,
     )
 
     # Optional: Python-side relationship definition

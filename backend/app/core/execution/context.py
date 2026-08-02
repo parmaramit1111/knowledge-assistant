@@ -6,10 +6,14 @@ from app.core.database import AsyncSessionLocal
 
 from app.repositories.document_repository import DocumentRepository
 from app.repositories.parsed_document_repository import ParsedDocumentRepository
+from app.repositories.document_chunk_repository import DocumentChunkRepository
 
+from app.services.document_workflow_service import DocumentWorkflowService
 from app.services.document_upload_service import DocumentUploadService
 from app.services.document_parser_service import DocumentParserService
 from app.services.document_processing_service import DocumentProcessingService
+from app.services.document_chunking_service import DocumentChunkingService
+from app.services.document_chunker_service import DocumentChunkerService
 
 
 class ExecutionContext:
@@ -45,9 +49,20 @@ class ExecutionContext:
     def parsed_document_repository(self):
         return ParsedDocumentRepository(self.session)
 
+    @cached_property
+    def document_chunk_repository(self):
+        return DocumentChunkRepository(self.session)
+
     #
     # Services
     #
+
+    @cached_property
+    def document_workflow_service(self):
+        return DocumentWorkflowService(
+            document_repository=self.document_repository,
+        )
+
     @cached_property
     def document_upload_service(self):
         return DocumentUploadService(
@@ -56,13 +71,25 @@ class ExecutionContext:
 
     @cached_property
     def document_parser_service(self):
-        return DocumentParserService(
-            parsed_document_repository=self.parsed_document_repository,
-        )
+        return DocumentParserService()
 
     @cached_property
     def document_processing_service(self):
         return DocumentProcessingService(
-            document_repository=self.document_repository,
+            document_workflow_service=self.document_workflow_service,
             parser_service=self.document_parser_service,
+            parsed_document_repository=self.parsed_document_repository,
+        )
+
+    @cached_property
+    def document_chunker_service(self):
+        return DocumentChunkerService()
+
+    @cached_property
+    def document_chunking_service(self):
+        return DocumentChunkingService(
+            document_chunk_repository=self.document_chunk_repository,
+            parsed_document_repository=self.parsed_document_repository,
+            document_workflow_service=self.document_workflow_service,
+            document_chunker_service=self.document_chunker_service,
         )

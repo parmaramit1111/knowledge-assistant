@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base import BaseRepository
-from app.models.document import Document, ParseStatus
+from app.models.document import Document, ParseStatus, ChunkStatus
 
 class DocumentRepository(BaseRepository[Document]):
 
@@ -21,6 +21,15 @@ class DocumentRepository(BaseRepository[Document]):
             Document.parse_status == ParseStatus.PENDING,
             limit=limit,
         )
+
+    async def get_pending_for_chunking(self, limit: int,):
+        return await self.find(
+            Document.is_deleted.is_(False),
+            Document.parse_status == ParseStatus.COMPLETED,
+            Document.chunk_status == ChunkStatus.PENDING,
+            limit=limit,
+        )
+
 
     async def get_document(self, id: UUID,) -> Document | None:
         return await self.get_by_id(id)

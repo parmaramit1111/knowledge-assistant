@@ -1,77 +1,64 @@
 from uuid import UUID
 
-from app.models.document import Document, DocumentStatus, ParseStatus
+from app.core.logging import get_logger
+
+from app.services.document_workflow_service import DocumentWorkflowService
 from app.services.document_parser_service import DocumentParserService
-from app.repositories.document_repository import DocumentRepository
+from app.repositories.parsed_document_repository import ParsedDocumentRepository
+
+logger = get_logger(__name__)
 
 class DocumentProcessingService:
 
     def __init__(
         self,
-        document_repository: DocumentRepository,
+        document_workflow_service: DocumentWorkflowService,
         parser_service: DocumentParserService,
+        parsed_document_repository: ParsedDocumentRepository,
     ) -> None:
-        self.document_repository =  document_repository
+        self.document_workflow_service = document_workflow_service
         self.parser_service =  parser_service
-
-    async def get_pending(self,limit:int) -> list[Document]:
-        return await self.document_repository.get_pending_for_processing(limit=limit)
-
-    async def get_document(self, id: UUID,) -> Document | None:
-        return await self.document_repository.get_document(id)
-
-    async def begin_processing(
-        self,
-        document_id: UUID,
-    ) -> Document | None:
-
-        document = await self.document_repository.get_document(document_id)
-
-        if document is None:
-            return None
-
-        document.document_status = DocumentStatus.PROCESSING
-        document.parse_status = ParseStatus.RUNNING
-
-        await self.document_repository.update(document)
-
-        return document
-
-    async def mark_parsing_completed(
-        self,
-        document: Document,
-    ) -> Document | None:
-        document.document_status = DocumentStatus.READY
-        document.parse_status = ParseStatus.COMPLETED
-
-        return await self.document_repository.update(document)
-
-    async def mark_parsing_failed(
-        self,
-        document: Document,
-    ) -> Document | None:
-        document.document_status = DocumentStatus.FAILED
-        document.parse_status = ParseStatus.FAILED
-
-        return await self.document_repository.update(document)
+        self.parsed_document_repository = parsed_document_repository
 
     async def process_document(
         self,
         document_id: UUID,
     ) -> None:
-        document = await self.begin_processing(document_id)
+        document = await self.document_workflow_service.get_document(document_id)
 
         if document is None:
             return
 
-        try:
-            await self.parser_service.parse(document)
+        await self.document_workflow_service.begin_processing(document_id)
 
-            await self.mark_parsing_completed(
-                document,
+        try:
+            parsed_document = await self.parser_service.parse(document)
+
+            parsed_document = await self.parsed_document_repository.add(
+                parsed_document
             )
+
+            await self.document_workflow_service.mark_parsing_completed(document)
         except Exception:
-            await self.mark_parsing_failed(
-                document,
+            await self.document_workflow_service.mark_parsing_failed(document)
+            logger.exception(
+                "Failed to parse document %s",
+                document_id,
             )
             raise
+        # document = await self.begin_processing(document_id)
+
+        # if document is None:
+        #     return
+
+        # try:
+        #     await self.parser_service.parse(document)
+
+        #     await self.mark_parsing_completed(
+        #         document,
+        #     )
+        # except Exception:
+        #     await self.mark_parsing_failed(
+        #         document,
+        #     )
+        #     raise

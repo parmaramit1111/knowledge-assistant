@@ -56,6 +56,9 @@ class Settings(BaseSettings):
     worker_batch_size: int = 10
     worker_interval_seconds: int = 10
 
+    chunk_size: int = 1000
+    chunk_overlap: int = 200
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,

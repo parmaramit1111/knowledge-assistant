@@ -17,3 +17,9 @@ class ParsedDocumentRepository(BaseRepository[ParsedDocument]):
 
     async def get(self, id: UUID,) -> ParsedDocument | None:
         return await self.get_by_id(id)
+
+    async def get_by_document_id(self, document_id: UUID,) -> ParsedDocument | None:
+        return await self.find_one(
+            ParsedDocument.document_id == document_id,
+        )
+
