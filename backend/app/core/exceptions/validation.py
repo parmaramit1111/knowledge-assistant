@@ -15,3 +15,19 @@ class ValidationException(AppException):
             code=ResponseCode.VALIDATION_ERROR,
             extra=extra
         )
+
+
+class UnsupportedDocumentTypeError(AppException):
+    """Exception raised when an unsupported document type is encountered."""
+
+    STATUS: HTTPStatus = HTTPStatus.UNSUPPORTED_MEDIA_TYPE
+
+    def __init__(self, content_type: str, *, extra: Optional[dict[str, Any]] = None) -> None:
+        detail = f"Unsupported document type: {content_type}"
+
+        super().__init__(
+            status_code=self.STATUS,
+            detail=detail,
+            code=ResponseCode.UNSUPPORTED_MEDIA_TYPE,
+            extra=extra
+        )

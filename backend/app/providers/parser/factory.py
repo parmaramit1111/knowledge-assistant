@@ -1,16 +1,19 @@
-from app.models.document import Document
 from app.providers.parser.base import BaseParser
 from app.providers.parser.pdf_parser import PdfParser
+from app.providers.parser.text_parser import TextParser
+from app.providers.parser.word_parser import WordParser
+from app.providers.parser.markdown_parser import MarkdownParser
+from app.providers.parser.html_parser import HtmlParser
 
 
 class ParserFactory:
 
     _parsers: list[type[BaseParser]] = [
         PdfParser,
-        # DocxParser,
-        # HtmlParser,
-        # MarkdownParser,
-        # TxtParser,
+        TextParser,
+        WordParser,
+        MarkdownParser,
+        HtmlParser,
     ]
 
     @classmethod
@@ -19,11 +22,16 @@ class ParserFactory:
         content_type: str,
     ) -> BaseParser:
 
+        content_type = content_type.split(";", 1)[0].strip().lower()
+
         for parser_class in cls._parsers:
 
             parser = parser_class()
 
-            if content_type in parser.supported_content_types:
+            if content_type in (
+                mime.lower()
+                for mime in parser.supported_content_types
+            ):
                 return parser
 
         raise ValueError(

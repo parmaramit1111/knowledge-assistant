@@ -1,12 +1,19 @@
 from uuid import UUID
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base import BaseRepository
 from app.models.document import Document, ParseStatus
 
 class DocumentRepository(BaseRepository[Document]):
 
-    def __init__(self):
-        super().__init__(Document)
+    def __init__(
+        self,
+        session: AsyncSession,
+    ):
+        super().__init__(
+            session,
+            Document,
+        )
 
     async def get_pending_for_processing(self, limit: int,):
         return await self.find(

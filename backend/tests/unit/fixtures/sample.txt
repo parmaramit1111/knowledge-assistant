@@ -1,0 +1,5 @@
+Knowledge Assistant
+
+This is a sample text document.
+
+Hello World.

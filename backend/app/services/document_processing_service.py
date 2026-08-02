@@ -1,14 +1,18 @@
 from uuid import UUID
 
-from app.core.dependencies.repository_factory import RepositoryFactory
-from backend.app.models.document import Document, DocumentStatus, ParseStatus
-from app.providers.parser.factory import ParserFactory
+from app.models.document import Document, DocumentStatus, ParseStatus
+from app.services.document_parser_service import DocumentParserService
+from app.repositories.document_repository import DocumentRepository
 
 class DocumentProcessingService:
 
-    def __init__(self) -> None:
-        self.document_repository =  RepositoryFactory.document_repository()
-        self.parsed_document_repository =  RepositoryFactory.parsed_document_repository()
+    def __init__(
+        self,
+        document_repository: DocumentRepository,
+        parser_service: DocumentParserService,
+    ) -> None:
+        self.document_repository =  document_repository
+        self.parser_service =  parser_service
 
     async def get_pending(self,limit:int) -> list[Document]:
         return await self.document_repository.get_pending_for_processing(limit=limit)
@@ -61,20 +65,12 @@ class DocumentProcessingService:
             return
 
         try:
-            parser = ParserFactory.get_parser(
-                document.content_type,
-            )
-
-            parsed_document = await parser.parse(document)
-
-            await self.parsed_document_repository.add(
-                parsed_document,
-            )
+            await self.parser_service.parse(document)
 
             await self.mark_parsing_completed(
                 document,
             )
-        except Exception as ex:
+        except Exception:
             await self.mark_parsing_failed(
                 document,
             )

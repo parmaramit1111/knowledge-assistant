@@ -4,7 +4,6 @@ from uuid import uuid4
 from fastapi import UploadFile
 
 from app.core.config import settings
-from app.core.dependencies.repository_factory import RepositoryFactory
 from app.core.exceptions.base import StorageException
 from app.core.exceptions.validation import ValidationException
 from app.models.document import (
@@ -14,14 +13,18 @@ from app.models.document import (
     EmbeddingStatus,
 )
 from app.schemas.document import UploadResponse
+from app.repositories.document_repository import DocumentRepository
 
 class DocumentUploadService:
     """
     Handles document upload business logic.
     """
 
-    def __init__(self) -> None:
-        self.repository =  RepositoryFactory.document_repository()
+    def __init__(
+        self,
+        document_repository: DocumentRepository,
+    ) -> None:
+        self.document_repository =  document_repository
 
     async def upload(
         self,
@@ -73,6 +76,6 @@ class DocumentUploadService:
             embedding_status=EmbeddingStatus.PENDING,
         )
 
-        document = await self.repository.add(document)
+        document = await self.document_repository.add(document)
 
         return UploadResponse.model_validate(document)

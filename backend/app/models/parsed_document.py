@@ -27,7 +27,7 @@ class ParsedDocument(BaseEntity):
     )
 
     parser_version: Mapped[str] = mapped_column(
-        String(5),
+        String(50),
         nullable=True,
     )
 

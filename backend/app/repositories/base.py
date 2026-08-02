@@ -1,10 +1,10 @@
 from typing import Generic, TypeVar
 from uuid import UUID
 
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import func, select
 
 from app.models.base import BaseEntity
-from app.core.transaction.context import get_session
 
 T = TypeVar("T", bound=BaseEntity)
 
@@ -16,9 +16,10 @@ class BaseRepository(Generic[T]):
 
     def __init__(
         self,
+        session: AsyncSession,
         model: type[T],
     ) -> None:
-        self._session = get_session()
+        self._session = session
         self._model = model
 
     async def add(self, entity: T) -> T:

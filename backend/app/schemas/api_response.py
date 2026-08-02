@@ -19,6 +19,8 @@ class ResponseCode(str, Enum):
 
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"
 
+    UNSUPPORTED_MEDIA_TYPE = "UNSUPPORTED_MEDIA_TYPE"
+
 
 class ApiResponse(BaseModel, Generic[T]):
     model_config = ConfigDict(from_attributes=True)

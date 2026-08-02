@@ -1,5 +1,6 @@
 from fastapi import APIRouter, File, UploadFile, status
 
+from app.core.execution.context import ExecutionContext
 from app.commands.upload.upload_document import UploadDocumentCommand
 from app.schemas.api_response import ApiResponse
 from app.schemas.document import UploadResponse
@@ -29,13 +30,16 @@ router = APIRouter()
 async def upload_document(
     file: UploadFile = File(...),
 ) -> ApiResponse[UploadResponse]:
-    command = UploadDocumentCommand(
-        file=file,
-    )
 
-    document = await command.execute()
+    async with ExecutionContext() as context:
+        command = UploadDocumentCommand(
+            context=context,
+            file=file,
+        )
 
-    return ResponseFactory.success(
-        result=UploadResponse.model_validate(document),
-        message="Document uploaded successfully.",
-    )
+        document = await command.execute()
+
+        return ResponseFactory.success(
+            result=UploadResponse.model_validate(document),
+            message="Document uploaded successfully.",
+        )

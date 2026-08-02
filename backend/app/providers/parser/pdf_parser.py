@@ -1,4 +1,3 @@
-from pathlib import Path
 import pymupdf
 
 from app.providers.parser.base import BaseParser
@@ -26,14 +25,7 @@ class PdfParser(BaseParser):
         self,
         document: Document,
     ) -> ParsedDocument:
-        if not document.storage_path:
-            raise ValueError("Document has no storage path.")
-
-        path = Path(document.storage_path)
-        if not path.exists():
-            raise FileNotFoundError(
-                f"Document file not found: {path}"
-            )
+        path = self._get_document_path(document)
 
         with pymupdf.open(document.storage_path) as pdf:
             text = []
