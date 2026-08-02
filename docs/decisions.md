@@ -4,17 +4,13 @@
 
 ### CQRS
 
-Reason
+**Reason**
 
-Separate reads from writes to simplify business logic.
+Separate read operations from write operations to simplify business logic and improve maintainability.
 
-Alternatives
+**Decision**
 
-- CRUD Service
-
-Decision
-
-Use CQRS.
+Use CQRS throughout the application.
 
 ---
 
@@ -22,86 +18,243 @@ Use CQRS.
 
 ### Repository Pattern
 
-Reason
+**Reason**
 
-Keep persistence isolated.
+Isolate persistence logic from business logic and provide a consistent data access layer.
+
+**Decision**
+
+All database access is performed through repositories derived from the generic `BaseRepository`.
 
 ---
 
 ## Decision 003
 
-### Ambient Transactions
+### ExecutionContext
 
-Reason
+**Reason**
 
-Avoid passing AsyncSession everywhere.
+Provide a single dependency container responsible for creating and managing the database session, repositories, and services for each request or background task.
+
+**Decision**
+
+Use `ExecutionContext` as the application's dependency management mechanism.
 
 ---
 
 ## Decision 004
 
-### ContextVar
+### Transaction Management
 
-Reason
+**Reason**
 
-Provides request-scoped transaction context.
+Ensure each command executes within an isolated transaction while keeping transaction handling transparent to business logic.
+
+**Decision**
+
+Commands execute inside transactional boundaries using `ExecutionContext` and the `@transactional` decorator.
 
 ---
 
 ## Decision 005
 
-### Provider Architecture
+### Workflow Services
 
-Reason
+**Reason**
 
-Support multiple AI providers.
+Separate business workflow orchestration from provider implementations and persistence.
+
+**Decision**
+
+Workflow services coordinate repositories, provider services, and document state transitions.
+
+Examples
+
+- DocumentWorkflowService
+- DocumentProcessingService
+- DocumentChunkingService
 
 ---
 
 ## Decision 006
 
-### Response Wrapper
+### Provider Services
 
-Reason
+**Reason**
 
-Consistent API contract.
+Separate business transformations from orchestration.
+
+**Decision**
+
+Provider services are responsible only for selecting and executing providers.
+
+Examples
+
+- DocumentParserService
+- DocumentChunkerService
+
+Provider services never perform persistence.
 
 ---
 
 ## Decision 007
 
-### UUID
+### Factory Pattern
 
-Reason
+**Reason**
 
-Distributed systems.
+Support multiple interchangeable implementations without changing business logic.
+
+**Decision**
+
+Use factories to resolve providers.
+
+Examples
+
+- ParserFactory
+- ChunkerFactory
+- EmbeddingFactory (Future)
 
 ---
 
 ## Decision 008
 
-### Async SQLAlchemy
+### Background Workers
 
-Reason
+**Reason**
 
-Better scalability.
+Document processing stages are long-running operations and should execute asynchronously.
+
+**Decision**
+
+Each processing stage is implemented as an independent background worker.
+
+Current
+
+- DocumentWorker
+- ChunkWorker
+
+Future
+
+- EmbeddingWorker
 
 ---
 
 ## Decision 009
 
-### Service Factory
+### Response Wrapper
 
-Reason
+**Reason**
 
-Centralized dependency creation.
+Provide a consistent API contract across all endpoints.
+
+**Decision**
+
+Every endpoint returns the standard `ApiResponse` model.
 
 ---
 
 ## Decision 010
 
-### Repository Factory
+### UUID Primary Keys
 
-Reason
+**Reason**
 
-Centralized repository creation using the current transaction context.
+Support distributed systems while avoiding sequential identifiers.
+
+**Decision**
+
+Use UUIDs as primary keys for all entities.
+
+---
+
+## Decision 011
+
+### Async SQLAlchemy
+
+**Reason**
+
+Improve scalability and maximize asynchronous request throughput.
+
+**Decision**
+
+Use SQLAlchemy Async with PostgreSQL throughout the application.
+
+---
+
+## Decision 012
+
+### Provider Independence
+
+**Reason**
+
+Allow new parsers, chunkers, embedding providers, vector databases, and LLMs to be added without modifying business workflow.
+
+**Decision**
+
+All external integrations are implemented behind provider interfaces and factories.
+
+---
+
+## Decision 013
+
+### Single Responsibility Services
+
+**Reason**
+
+Keep services small, focused, and easy to test.
+
+**Decision**
+
+Every processing stage is divided into two service types:
+
+- Workflow Service
+- Provider Service
+
+Workflow services orchestrate the process.
+
+Provider services perform the business transformation.
+
+---
+
+## Decision 014
+
+### Processing Pipeline
+
+**Reason**
+
+Create a predictable and extensible document ingestion pipeline.
+
+**Decision**
+
+Every processing stage follows the same architecture.
+
+```text
+Worker
+
+↓
+
+Command
+
+↓
+
+Workflow Service
+
+↓
+
+Provider Service
+
+↓
+
+Factory
+
+↓
+
+Provider
+```
+
+This pattern is used for:
+
+- Parsing
+- Chunking
+- Embeddings (Future)

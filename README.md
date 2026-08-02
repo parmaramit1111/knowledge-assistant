@@ -1,142 +1,195 @@
 # Knowledge Assistant
 
-An enterprise-grade AI-powered Knowledge Assistant built with **FastAPI**, **React**, and a modular **Retrieval-Augmented Generation (RAG)** architecture.
+An enterprise-grade, provider-agnostic Knowledge Assistant built with **FastAPI**, **React**, and a modular **Retrieval-Augmented Generation (RAG)** architecture.
 
-The platform enables organizations to upload documents, build an intelligent knowledge base, and ask natural language questions with AI-generated answers grounded in their own data.
+The platform enables organizations to upload documents, build an intelligent knowledge base, and retrieve grounded AI responses using their own data.
 
 ---
 
 # Vision
 
-The goal of this project is to build a production-ready knowledge platform that:
+The goal of this project is to build a production-ready enterprise knowledge platform that:
 
-- Stores organizational knowledge
 - Supports multiple document formats
-- Generates semantic embeddings
-- Performs vector similarity search
+- Builds semantic knowledge from uploaded documents
+- Generates vector embeddings
+- Performs semantic similarity search
 - Produces grounded AI responses
+- Supports multiple embedding providers
+- Supports multiple vector databases
 - Supports multiple LLM providers
-- Is provider-agnostic and extensible
+- Remains modular and provider independent
 
-The application is designed around clean architecture principles so every component can evolve independently.
+The architecture is designed around Clean Architecture principles where every processing stage has a single responsibility and can evolve independently.
 
 ---
 
 # Current Status
 
-## Backend Foundation
+## Completed ✅
 
-**Status:** ✅ Completed
+### Backend Foundation
 
-Implemented:
-
-- FastAPI REST API
-- CQRS (Command / Query Separation)
-- Generic Repository Pattern
-- Ambient Transaction using ContextVar
-- Transaction Decorator (`@transactional`)
-- SQLAlchemy 2.0 Async ORM
+- FastAPI
+- SQLAlchemy Async
 - PostgreSQL
-- Alembic Migrations
+- Alembic
+- Generic Repository Pattern
+- CQRS
+- ExecutionContext
+- Workflow Services
+- Provider Services
+- Background Scheduler
 - Global Exception Handling
 - Standard API Response
 - Request Correlation ID
-- Connection Pooling
-- Local Document Storage
+- Local File Storage
+
+### Document Processing
+
 - Document Upload API
-- Repository Integration
-- Transaction Rollback Support
+- PDF Parser
+- Word (DOCX) Parser
+- Text Parser
+- HTML Parser
+- Markdown Parser
+- Parser Factory
+- Parsed Document Persistence
+- Background Parsing Worker
+
+### Document Chunking
+
+- Recursive Character Splitter
+- Chunker Factory
+- Document Chunk Persistence
+- Background Chunk Worker
 
 ---
 
-# Planned Features
+## In Progress 🚧
 
-- PDF Parsing
-- DOCX Parsing
-- TXT Parsing
-- Intelligent Document Chunking
 - Embedding Generation
-- ChromaDB Integration
+
+---
+
+## Planned
+
+- Vector Database Integration
 - Semantic Search
+- Prompt Builder
 - AI Chat
 - Conversation History
 - Authentication
-- Multi-user Workspace
-- Role-based Authorization
-- Multiple LLM Providers
-- Multiple Vector Database Providers
+- Multi-Tenant Support
+- Monitoring
+- CI/CD
 
 ---
 
-# High-Level Architecture
+# Processing Pipeline
+
+The backend currently implements the following processing pipeline.
 
 ```text
-                +---------------------+
-                |     React Client    |
-                +----------+----------+
-                           |
-                           |
-                    REST API (FastAPI)
-                           |
-                           |
-                +----------+----------+
-                |    API Controllers  |
-                +----------+----------+
-                           |
-                 Commands / Queries
-                           |
-                           |
-                +----------+----------+
-                |      Services       |
-                +----------+----------+
-                           |
-                     Repositories
-                           |
-                           |
-                   PostgreSQL Database
-
-                           |
-                           |
-                    Document Storage
-
-                           |
-                           ▼
-
-                     RAG Processing
+Upload Document
+        │
+        ▼
+Parse Document
+        │
+        ▼
+Chunk Document
+        │
+        ▼
+Embeddings (Upcoming)
+        │
+        ▼
+Vector Database
+        │
+        ▼
+Semantic Retrieval
+        │
+        ▼
+Prompt Builder
+        │
+        ▼
+LLM
+        │
+        ▼
+AI Response
 ```
 
 ---
 
-# Backend Architecture
-
-The backend follows a layered architecture.
+# Architecture Overview
 
 ```text
-HTTP Request
-      │
-      ▼
-Controller
-      │
-      ▼
-Command / Query
-      │
-      ▼
-Service
-      │
-      ▼
+                HTTP Request
+                     │
+                     ▼
+             FastAPI Controller
+                     │
+                     ▼
+             ExecutionContext
+                     │
+                     ▼
+             Command / Query
+                     │
+                     ▼
+          Workflow Service
+                     │
+          ┌──────────┴──────────┐
+          ▼                     ▼
+  Provider Service        Repository
+          │
+          ▼
+     Provider Factory
+          │
+          ▼
+        Provider
+```
+
+---
+
+# Background Processing
+
+Long-running operations execute asynchronously.
+
+```text
+Scheduler
+
+↓
+
+Worker
+
+↓
+
+ExecutionContext
+
+↓
+
+Command
+
+↓
+
+Workflow Service
+
+↓
+
+Provider Service
+
+↓
+
 Repository
-      │
-      ▼
-Database
 ```
 
-Cross-cutting concerns:
+Current workers
 
-- Transaction Management
-- Exception Handling
-- Request Context
-- Logging
-- Response Formatting
+- DocumentWorker
+- ChunkWorker
+
+Future workers
+
+- EmbeddingWorker
 
 ---
 
@@ -146,9 +199,9 @@ Cross-cutting concerns:
 
 - Python 3.12
 - FastAPI
-- SQLAlchemy 2.0
-- Alembic
+- SQLAlchemy Async
 - PostgreSQL
+- Alembic
 - Pydantic v2
 
 ## Frontend
@@ -159,9 +212,35 @@ Cross-cutting concerns:
 
 ## AI
 
-- Ollama
-- ChromaDB
+### Current
+
+- LangChain Text Splitters
+
+### Planned
+
 - Sentence Transformers
+- Ollama
+- OpenAI
+- ChromaDB
+
+---
+
+# Supported Document Formats
+
+Currently supported
+
+- PDF
+- DOCX
+- TXT
+- HTML
+- Markdown
+
+Future
+
+- OCR
+- Images
+- Excel
+- PowerPoint
 
 ---
 
@@ -169,35 +248,27 @@ Cross-cutting concerns:
 
 ```text
 knowledge-assistant/
-│
+
 ├── backend/
-│   │
 │   ├── app/
-│   │   │
 │   │   ├── api/
 │   │   ├── commands/
 │   │   ├── core/
-│   │   │   ├── dependencies/
-│   │   │   ├── exceptions/
-│   │   │   ├── handlers/
-│   │   │   ├── middleware/
-│   │   │   └── transaction/
-│   │   │
 │   │   ├── models/
 │   │   ├── providers/
-│   │   ├── queries/
+│   │   │   ├── parser/
+│   │   │   ├── chunker/
+│   │   │   └── embedding/
 │   │   ├── repositories/
-│   │   ├── schemas/
 │   │   ├── services/
-│   │   └── utils/
-│   │
+│   │   ├── workers/
+│   │   └── schemas/
 │   ├── migrations/
 │   ├── storage/
 │   └── tests/
 │
 ├── frontend/
 ├── docs/
-├── samples/
 ├── scripts/
 └── README.md
 ```
@@ -206,46 +277,24 @@ knowledge-assistant/
 
 # Design Principles
 
-The project follows the following architectural principles:
+The project follows these architectural principles.
 
 - Clean Architecture
 - SOLID Principles
 - CQRS
 - Repository Pattern
-- Ambient Transactions
-- Dependency Factories
-- Provider-based Integrations
+- ExecutionContext
+- Workflow Services
+- Provider Services
+- Factory Pattern
+- Background Workers
 - Async First
 - Strong Typing
-- Separation of Concerns
 - Single Responsibility Principle
 
 ---
 
-# Database
-
-Current Database
-
-- PostgreSQL
-
-ORM
-
-- SQLAlchemy Async
-
-Migration
-
-- Alembic
-
-Features
-
-- UUID Primary Keys
-- Connection Pooling
-- Transaction Management
-- Soft Delete Ready
-
----
-
-# API Response Format
+# API Response
 
 Every endpoint returns a consistent response.
 
@@ -262,110 +311,57 @@ Every endpoint returns a consistent response.
 
 ---
 
-# Current APIs
+# Current API
 
 ## Health
 
-```
+```http
 GET /api/v1/health
 ```
-
-Returns application health information.
 
 ---
 
 ## Upload Document
 
-```
+```http
 POST /api/v1/documents/upload
 ```
 
-Uploads a supported document into the system.
-
-Current supported format:
+Supported document types
 
 - PDF
-
----
-
-# Development Workflow
-
-Current workflow:
-
-```text
-Controller
-      │
-      ▼
-Command
-      │
-      ▼
-Service
-      │
-      ▼
-Repository
-      │
-      ▼
-Database
-```
-
-Every write operation executes inside a transaction using the `@transactional` decorator.
+- DOCX
+- TXT
+- HTML
+- Markdown
 
 ---
 
 # Documentation
 
-Project documentation is available inside the `docs/` directory.
+Additional documentation is available in the `docs/` directory.
 
-- Architecture
-- RAG Pipeline
-- API Reference
-- Setup Guide
-- Engineering Decisions
-- Roadmap
-
----
-
-# Development Roadmap
-
-## Phase 1
-
-- ✅ Backend Foundation
-- ✅ Upload API
-- ✅ Repository Layer
-- ✅ Transaction Management
+- architecture.md
+- roadmap.md
+- rag-pipeline.md
+- decisions.md
+- api.md
+- setup.md
 
 ---
 
-## Phase 2
+# Roadmap
 
-- PDF Parser
-- Document Metadata
-- Chunking
-
----
-
-## Phase 3
-
-- Embeddings
-- ChromaDB
-- Semantic Search
-
----
-
-## Phase 4
-
-- Chat
-- Prompt Builder
-- Conversation Memory
-
----
-
-## Phase 5
-
-- Authentication
-- Multi-user Support
-- Provider Plugins
-- Monitoring
+| Milestone           | Status  |
+| ------------------- | ------- |
+| Backend Foundation  | ✅      |
+| Document Processing | ✅      |
+| Document Chunking   | ✅      |
+| Embeddings          | 🚧      |
+| Vector Database     | Planned |
+| Semantic Search     | Planned |
+| AI Chat             | Planned |
+| Enterprise Features | Planned |
 
 ---
 

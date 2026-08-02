@@ -2,18 +2,21 @@
 
 ## Overview
 
-The Knowledge Assistant backend is designed as a modular, enterprise-grade application built on **Clean Architecture** principles.
+The Knowledge Assistant backend is designed as a modular, enterprise-grade application following **Clean Architecture** principles.
 
-The primary goals of the architecture are:
+The architecture separates business workflow, provider integrations, persistence, and infrastructure into well-defined layers to maximize maintainability, scalability, and extensibility.
 
-- Separation of Concerns
-- Maintainability
-- Scalability
-- Testability
-- Extensibility
-- Provider Independence
+The backend is built around the following architectural patterns:
 
-The application follows a layered architecture combined with **CQRS**, **Repository Pattern**, **Ambient Transactions**, and **Dependency Factories**.
+- Clean Architecture
+- CQRS
+- Repository Pattern
+- ExecutionContext
+- Workflow Services
+- Provider Services
+- Factory Pattern
+- Background Workers
+- Async First Design
 
 ---
 
@@ -26,25 +29,32 @@ The application follows a layered architecture combined with **CQRS**, **Reposit
              FastAPI Controller
                      │
                      ▼
-              Command / Query
+             ExecutionContext
                      │
                      ▼
-                  Service
+             Command / Query
                      │
                      ▼
-                Repository
+          Workflow Service
                      │
-                     ▼
-                 PostgreSQL
+          ┌──────────┴──────────┐
+          ▼                     ▼
+  Provider Service        Repository
+          │
+          ▼
+     Provider Factory
+          │
+          ▼
+        Provider
 ```
 
-Cross-cutting concerns:
+Cross-cutting concerns
 
 - Transactions
 - Logging
 - Exception Handling
-- Request Context
-- Response Formatting
+- Configuration
+- Dependency Management
 
 ---
 
@@ -56,8 +66,10 @@ The backend follows these principles.
 - SOLID Principles
 - CQRS
 - Repository Pattern
-- Ambient Transactions
-- Provider Pattern
+- ExecutionContext
+- Workflow Services
+- Provider Services
+- Factory Pattern
 - Strong Typing
 - Async First
 - Single Responsibility Principle
@@ -76,10 +88,14 @@ backend/
 │   ├── core/
 │   ├── models/
 │   ├── providers/
+│   │   ├── parser/
+│   │   ├── chunker/
+│   │   └── embedding/
 │   ├── queries/
 │   ├── repositories/
 │   ├── schemas/
 │   ├── services/
+│   ├── workers/
 │   └── utils/
 │
 ├── migrations/
@@ -90,8 +106,6 @@ backend/
 ---
 
 # Layer Responsibilities
-
----
 
 ## API Layer
 
@@ -104,11 +118,35 @@ app/api/
 Responsibilities
 
 - Define REST endpoints
-- Validate HTTP requests
+- Validate requests
 - Return standardized responses
 - Execute Commands or Queries
 
 Controllers never contain business logic.
+
+---
+
+## ExecutionContext
+
+Location
+
+```
+app/core/execution/
+```
+
+Purpose
+
+ExecutionContext manages the lifecycle of a request or background operation.
+
+Responsibilities
+
+- Create database session
+- Create repositories
+- Create services
+- Dispose resources
+- Share dependencies through Commands
+
+ExecutionContext acts as the application's Dependency Injection container.
 
 ---
 
@@ -127,14 +165,14 @@ Commands represent write operations.
 Examples
 
 - UploadDocumentCommand
-- DeleteDocumentCommand
-- UpdateDocumentCommand
+- ParseDocumentCommand
+- ChunkDocumentCommand
 
 Responsibilities
 
 - Receive validated input
-- Execute inside a transaction
-- Call the appropriate service
+- Execute application use cases
+- Coordinate workflow through services
 
 Commands never access repositories directly.
 
@@ -154,38 +192,144 @@ Queries represent read operations.
 
 Examples
 
-- HealthCheckQuery
 - GetDocumentQuery
 - SearchDocumentsQuery
+- HealthCheckQuery
 
 Queries never modify data.
 
 ---
 
-## Services
+# Services
+
+The application separates services into two categories.
+
+---
+
+## Workflow Services
+
+Purpose
+
+Workflow services orchestrate business processes.
+
+Examples
+
+- DocumentWorkflowService
+- DocumentProcessingService
+- DocumentChunkingService
+
+Responsibilities
+
+- Business workflow
+- State transitions
+- Repository coordination
+- Background processing
+- Error handling
+
+Workflow services own the application workflow.
+
+---
+
+## Provider Services
+
+Purpose
+
+Provider services perform business transformations.
+
+Examples
+
+- DocumentParserService
+- DocumentChunkerService
+
+Responsibilities
+
+- Select providers
+- Execute providers
+- Transform domain models
+
+Provider services never perform persistence or workflow management.
+
+---
+
+# Providers
 
 Location
 
 ```
-app/services/
+app/providers/
 ```
 
 Purpose
 
-Business logic lives here.
+Providers integrate external libraries and technologies.
 
-Responsibilities
+Examples
 
-- Validation
-- Orchestration
-- Domain rules
-- DTO ↔ Entity mapping
+Document Parsers
 
-Services coordinate repositories and providers.
+- PDF Parser
+- Word Parser
+- HTML Parser
+- Markdown Parser
+- Text Parser
+
+Chunkers
+
+- Recursive Character Splitter
+
+Future Providers
+
+- OpenAI Embeddings
+- Sentence Transformers
+- Ollama Embeddings
+
+Providers contain integration logic only.
 
 ---
 
-## Repositories
+# Provider Factories
+
+Factories select the appropriate provider.
+
+Example
+
+```text
+ParserFactory
+
+↓
+
+PDF Parser
+Word Parser
+HTML Parser
+Markdown Parser
+Text Parser
+```
+
+```text
+ChunkerFactory
+
+↓
+
+RecursiveChunker
+```
+
+Future
+
+```text
+EmbeddingFactory
+
+↓
+
+OpenAI
+Sentence Transformers
+Ollama
+```
+
+Business logic never depends on a specific provider implementation.
+
+---
+
+# Repositories
 
 Location
 
@@ -195,21 +339,34 @@ app/repositories/
 
 Purpose
 
-Repositories provide database access.
+Repositories provide persistence.
 
 Responsibilities
 
 - CRUD
-- Queries
+- Search
 - Persistence
+- Database Queries
 
-Repositories contain no business logic.
+Repositories never contain business logic.
 
-Repositories automatically use the active transaction through the transaction context.
+Every repository inherits from the generic BaseRepository.
+
+Shared functionality
+
+- add()
+- add_many()
+- update()
+- delete()
+- get_by_id()
+- find()
+- find_one()
+- exists()
+- count()
 
 ---
 
-## Models
+# Models
 
 Location
 
@@ -219,19 +376,19 @@ app/models/
 
 Purpose
 
-SQLAlchemy ORM models.
+Database entities mapped through SQLAlchemy.
 
 Responsibilities
 
-- Database mapping
+- Persistence mapping
 - Relationships
-- Persistence model
+- Database constraints
 
-Models should not be returned directly to API clients.
+Models are never returned directly by the API.
 
 ---
 
-## Schemas
+# Schemas
 
 Location
 
@@ -247,59 +404,10 @@ Contains
 
 - Request Models
 - Response Models
-- Shared DTOs
+- DTOs
 - ApiResponse
 
-Schemas are independent of the database.
-
----
-
-## Providers
-
-Location
-
-```
-app/providers/
-```
-
-Purpose
-
-Integrate with external systems.
-
-Examples
-
-- PDF Parser
-- ChromaDB
-- Ollama
-- OpenAI
-- Sentence Transformers
-
-Providers contain integration logic only.
-
----
-
-## Core
-
-Location
-
-```
-app/core/
-```
-
-Purpose
-
-Infrastructure shared by the application.
-
-Contains
-
-- Configuration
-- Database
-- Middleware
-- Transactions
-- Exception Handling
-- Dependencies
-- Logging
-- Security
+Schemas remain independent of persistence models.
 
 ---
 
@@ -314,23 +422,27 @@ Controller
 
 ↓
 
+ExecutionContext
+
+↓
+
 Command
 
 ↓
 
-@transactional
+Workflow Service
 
 ↓
 
-Service
+Provider Service
+
+↓
+
+Provider
 
 ↓
 
 Repository
-
-↓
-
-Database
 
 ↓
 
@@ -343,18 +455,61 @@ API Response
 
 ---
 
-# Transaction Management
+# Background Processing
 
-The application uses Ambient Transactions.
+The application processes long-running operations asynchronously.
 
-Transaction lifecycle
+Architecture
 
 ```text
+Scheduler
+
+↓
+
+Worker
+
+↓
+
+ExecutionContext
+
+↓
+
 Command
 
 ↓
 
-@transactional
+Workflow Service
+
+↓
+
+Provider Service
+
+↓
+
+Repository
+```
+
+Current Workers
+
+- DocumentWorker
+- ChunkWorker
+
+Future Workers
+
+- EmbeddingWorker
+
+Each document is processed inside its own ExecutionContext, providing independent transactions and failure isolation.
+
+---
+
+# Transaction Management
+
+Every Command executes inside a transaction.
+
+Transaction lifecycle
+
+```text
+ExecutionContext
 
 ↓
 
@@ -362,15 +517,15 @@ Create AsyncSession
 
 ↓
 
-Store Session in ContextVar
+Execute Command
 
 ↓
 
-Execute Service
+Workflow Service
 
 ↓
 
-Repository retrieves Session
+Repository
 
 ↓
 
@@ -385,80 +540,48 @@ Rollback
 Dispose Session
 ```
 
-Repositories never receive the session explicitly.
-
-Instead they retrieve the active session from the transaction context.
-
-Benefits
-
-- Cleaner service code
-- No session plumbing
-- Automatic Unit of Work
+Each background task receives an isolated transaction.
 
 ---
 
 # Dependency Management
 
-Dependencies are created through factories.
+Dependencies are managed through ExecutionContext.
 
 ```text
-ServiceFactory
+ExecutionContext
 
 ↓
 
-DocumentUploadService
+Repositories
+
+↓
+
+Workflow Services
+
+↓
+
+Provider Services
+
+↓
+
+Commands
 ```
 
-```text
-RepositoryFactory
-
-↓
-
-DocumentRepository
-```
-
-This keeps object creation centralized.
-
----
-
-# Repository Pattern
-
-Every repository inherits from the generic BaseRepository.
-
-Example
-
-```text
-BaseRepository
-
-↓
-
-DocumentRepository
-
-↓
-
-Future Repositories
-```
-
-Shared functionality
-
-- Add
-- Update
-- Delete
-- GetById
-- Exists
-- Count
+This centralizes dependency creation and eliminates service factories.
 
 ---
 
 # CQRS
 
-The application separates reads and writes.
+The application separates reads from writes.
 
 Commands
 
 - Create
 - Update
 - Delete
+- Background Processing
 
 Queries
 
@@ -468,22 +591,18 @@ Queries
 
 Benefits
 
-- Simpler code
-- Better scalability
+- Clear separation of responsibilities
 - Easier testing
+- Better scalability
 
 ---
 
 # Exception Handling
 
-Global exception handlers translate exceptions into consistent API responses.
+Global exception handlers convert exceptions into standardized API responses.
 
 ```text
 ValidationException
-
-↓
-
-Exception Handler
 
 ↓
 
@@ -495,24 +614,18 @@ NotFoundException
 
 ↓
 
-Exception Handler
-
-↓
-
 HTTP 404
 ```
 
 ```text
-InternalException
-
-↓
-
-Exception Handler
+Unhandled Exception
 
 ↓
 
 HTTP 500
 ```
+
+Background workers log failures while maintaining workflow state.
 
 ---
 
@@ -533,36 +646,6 @@ Every endpoint returns
 
 ---
 
-# Request Correlation
-
-Every request receives a unique Request ID.
-
-Flow
-
-```text
-HTTP Request
-
-↓
-
-RequestIdMiddleware
-
-↓
-
-ContextVar
-
-↓
-
-Logger
-
-↓
-
-Response Header
-```
-
-This makes troubleshooting much easier.
-
----
-
 # Database
 
 Database
@@ -579,16 +662,16 @@ Migration
 
 Features
 
-- UUID Keys
-- Connection Pooling
+- UUID Primary Keys
 - Async Queries
-- Ambient Transactions
+- Connection Pooling
+- Transaction Management
 
 ---
 
-# RAG Architecture
+# Processing Pipeline
 
-The backend prepares documents for the Retrieval-Augmented Generation pipeline.
+The current document processing pipeline is
 
 ```text
 Upload
@@ -603,19 +686,19 @@ Chunk
 
 ↓
 
-Embeddings
+Embeddings (Upcoming)
 
 ↓
 
-Vector Store
+Vector Database
 
 ↓
 
-Semantic Search
+Retrieval
 
 ↓
 
-Prompt
+Prompt Builder
 
 ↓
 
@@ -626,54 +709,58 @@ LLM
 Response
 ```
 
-The RAG pipeline is documented separately in **rag-pipeline.md**.
-
 ---
 
-# Future Architecture
+# Provider Independence
 
-The architecture is designed to support multiple providers.
+The architecture is provider-agnostic.
 
-Examples
-
-Document Parser
+Document Parsers
 
 - PDF
 - DOCX
 - TXT
+- HTML
+- Markdown
 
-Embedding Provider
+Chunkers
+
+- Recursive Character Splitter
+- Semantic Splitter (Future)
+
+Embeddings
 
 - Sentence Transformers
 - Ollama
 - OpenAI
 
-Vector Store
+Vector Databases
 
 - ChromaDB
 - PGVector
 - Milvus
 - Qdrant
 
-LLM
+LLMs
 
 - Ollama
 - OpenAI
 - Anthropic
 - Gemini
 
-Adding a new provider should not require changes to business logic.
+Adding a new provider should require no changes to business workflow.
 
 ---
 
 # Engineering Goals
 
-The architecture is designed to remain:
+The architecture is designed to remain
 
 - Modular
+- Extensible
 - Provider Independent
-- Easy to Test
-- Easy to Extend
+- Testable
+- Maintainable
 - Enterprise Ready
 - Cloud Ready
 - AI Ready
