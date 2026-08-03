@@ -1,0 +1,46 @@
+from sentence_transformers import SentenceTransformer
+
+from app.core.config import settings
+from .base import BaseEmbedding
+from app.models.document_chunk import DocumentChunk
+
+class SentenceTransformerEmbedding(BaseEmbedding):
+
+    @property
+    def name(self) -> str:
+        """Embedding name."""
+        return settings.embedding_provider
+
+    @property
+    def version(self) -> str:
+        """Embedding version."""
+        return "1.0"
+
+    @property
+    def dimensions(self) -> int:
+        return settings.embedding_dimension
+
+    @property
+    def embedding_model(self) -> str:
+        return settings.embedding_model
+
+    def __init__(self) -> None:
+        self.model = SentenceTransformer(
+            settings.embedding_model,
+        )
+
+    async def embed(
+        self,
+        document_chunk: DocumentChunk,
+    ) -> list[float]:
+        """
+        Generate an embedding vector for a document chunk.
+        """
+
+        embedding = self.model.encode(
+            document_chunk.content,
+            convert_to_numpy=True,
+            normalize_embeddings=True,
+        )
+
+        return embedding.tolist()

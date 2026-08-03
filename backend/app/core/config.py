@@ -1,6 +1,7 @@
 from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from sqlalchemy.engine import URL
 
 
 class Settings(BaseSettings):
@@ -8,7 +9,23 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     app_env: str = "development"
 
-    database_url: str = ""
+    database_host: str = "127.0.0.1"
+    database_port: int = 5433
+    database_name: str = "knowledge_assistant"
+    database_user: str = "postgres"
+    database_password: str = ""
+
+    @property
+    def database_url(self) -> URL:
+        return URL.create(
+            drivername="postgresql+asyncpg",
+            username=self.database_user,
+            password=self.database_password,
+            host=self.database_host,
+            port=self.database_port,
+            database=self.database_name,
+        )
+
     database_echo: bool = False
     database_pool_size: int = 20
     database_max_overflow: int = 10
@@ -58,6 +75,10 @@ class Settings(BaseSettings):
 
     chunk_size: int = 1000
     chunk_overlap: int = 200
+
+    embedding_provider: str = "sentence_transformers"
+    embedding_model: str = "all-MiniLM-L6-v2"
+    embedding_dimension: int = 384
 
     model_config = SettingsConfigDict(
         env_file=".env",

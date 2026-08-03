@@ -27,6 +27,12 @@ class DocumentWorkflowService:
     ) -> list[Document]:
         return await self.document_repository.get_pending_for_processing(limit)
 
+    async def get_pending_for_embedding(
+        self,
+        limit: int,
+    ) -> list[Document]:
+        return await self.document_repository.get_pending_for_embedding(limit)
+
     async def get_document(
         self,
         document_id: UUID,
