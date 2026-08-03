@@ -7,6 +7,7 @@ from app.core.database import AsyncSessionLocal
 from app.repositories.document_repository import DocumentRepository
 from app.repositories.parsed_document_repository import ParsedDocumentRepository
 from app.repositories.document_chunk_repository import DocumentChunkRepository
+from app.repositories.document_chunk_embedding_repository import DocumentChunkEmbeddingRepository
 
 from app.services.document_workflow_service import DocumentWorkflowService
 from app.services.document_upload_service import DocumentUploadService
@@ -14,7 +15,8 @@ from app.services.document_parser_service import DocumentParserService
 from app.services.document_processing_service import DocumentProcessingService
 from app.services.document_chunking_service import DocumentChunkingService
 from app.services.document_chunker_service import DocumentChunkerService
-
+from app.services.document_embedder_service import DocumentEmbedderService
+from app.services.document_embedding_service import DocumentEmbeddingService
 
 class ExecutionContext:
 
@@ -52,6 +54,10 @@ class ExecutionContext:
     @cached_property
     def document_chunk_repository(self):
         return DocumentChunkRepository(self.session)
+
+    @cached_property
+    def document_chunk_embedding_repository(self):
+        return DocumentChunkEmbeddingRepository(self.session)
 
     #
     # Services
@@ -92,4 +98,18 @@ class ExecutionContext:
             parsed_document_repository=self.parsed_document_repository,
             document_workflow_service=self.document_workflow_service,
             document_chunker_service=self.document_chunker_service,
+        )
+
+    @cached_property
+    def document_embedder_service(self):
+        return DocumentEmbedderService()
+
+    @cached_property
+    def document_embedding_service(self):
+        return DocumentEmbeddingService(
+            document_chunk_repository=self.document_chunk_repository,
+            parsed_document_repository=self.parsed_document_repository,
+            document_chunk_embedding_repository=self.document_chunk_embedding_repository,
+            document_workflow_service=self.document_workflow_service,
+            document_embedder_service=self.document_embedder_service,
         )

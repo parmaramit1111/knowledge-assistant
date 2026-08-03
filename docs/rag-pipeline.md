@@ -23,7 +23,7 @@ Chunk Document
 Generate Embeddings
         │
         ▼
-Store in Vector Database
+Store in PostgreSQL (pgvector)
         │
         ▼
 Semantic Retrieval
@@ -42,45 +42,46 @@ AI Response
 
 # Current Project Status
 
-| Stage           | Status            |
-| --------------- | ----------------- |
-| Upload          | ✅ Completed      |
-| Parsing         | ✅ Completed      |
-| Chunking        | ✅ Completed      |
-| Embeddings      | 🚧 Next Milestone |
-| Vector Database | Planned           |
-| Retrieval       | Planned           |
-| Prompt Builder  | Planned           |
-| AI Chat         | Planned           |
+| Stage                     | Status         |
+| ------------------------- | -------------- |
+| Upload                    | ✅ Completed   |
+| Parsing                   | ✅ Completed   |
+| Chunking                  | ✅ Completed   |
+| Embeddings                | ✅ Completed   |
+| Vector Storage (pgvector) | ✅ Completed   |
+| Semantic Retrieval        | 🚧 In Progress |
+| Prompt Builder            | Planned        |
+| AI Chat                   | Planned        |
 
 ---
 
 # Processing Pipeline
 
-Every stage follows the same architecture.
+Every processing stage follows the same architecture.
 
 ```text
+Scheduler
+        │
+        ▼
 Worker
-
-↓
-
+        │
+        ▼
 Command
-
-↓
-
+        │
+        ▼
 Workflow Service
-
-↓
-
+        │
+        ▼
 Provider Service
-
-↓
-
+        │
+        ▼
 Factory
-
-↓
-
+        │
+        ▼
 Provider
+        │
+        ▼
+Repository
 ```
 
 This keeps each processing stage modular, testable, and provider-independent.
@@ -91,14 +92,15 @@ This keeps each processing stage modular, testable, and provider-independent.
 
 ## Stage 1 — Document Upload ✅
 
-Responsibilities
+### Responsibilities
 
 - Receive uploaded documents
-- Validate file type
-- Store documents
+- Validate supported file types
+- Store original documents
 - Create document record
+- Initialize processing workflow
 
-Supported Formats
+### Supported Formats
 
 - PDF
 - DOCX
@@ -106,7 +108,7 @@ Supported Formats
 - HTML
 - Markdown
 
-Output
+### Output
 
 ```text
 Document
@@ -116,14 +118,14 @@ Document
 
 ## Stage 2 — Document Parsing ✅
 
-Responsibilities
+### Responsibilities
 
-- Select appropriate parser
+- Select the appropriate parser
 - Extract document content
-- Store ParsedDocument
-- Update workflow status
+- Persist ParsedDocument
+- Update document workflow
 
-Current Parsers
+### Current Parsers
 
 - PDF Parser
 - Word Parser
@@ -131,12 +133,12 @@ Current Parsers
 - HTML Parser
 - Markdown Parser
 
-Future Enhancements
+### Future Enhancements
 
 - Metadata Extraction
 - OCR Support
 
-Output
+### Output
 
 ```text
 ParsedDocument
@@ -146,23 +148,23 @@ ParsedDocument
 
 ## Stage 3 — Document Chunking ✅
 
-Responsibilities
+### Responsibilities
 
-- Split parsed documents into semantic chunks
+- Split parsed documents into chunks
 - Persist document chunks
-- Update workflow status
+- Update chunk workflow
 
-Current Strategy
+### Current Strategy
 
 - Recursive Character Splitter
 
-Future Strategies
+### Future Strategies
 
 - Semantic Splitter
 - Markdown Splitter
 - Token Splitter
 
-Output
+### Output
 
 ```text
 DocumentChunk[]
@@ -170,67 +172,79 @@ DocumentChunk[]
 
 ---
 
-## Stage 4 — Embeddings 🚧
+## Stage 4 — Embeddings ✅
 
-Responsibilities
+### Responsibilities
 
-- Generate embeddings for every document chunk
-- Persist vector representations
-- Update embedding workflow
+- Generate vector embeddings for every document chunk
+- Persist embeddings using pgvector
+- Track embedding workflow
+- Store embedding metadata
 
-Planned Providers
+### Current Provider
 
 - Sentence Transformers
+  - Model: `all-MiniLM-L6-v2`
+  - Dimensions: 384
+
+### Future Providers
+
 - Ollama Embeddings
 - OpenAI Embeddings
+- Additional embedding providers
 
-Output
+### Output
 
 ```text
-Embedded Document Chunks
+DocumentChunkEmbedding[]
 ```
 
 ---
 
-## Stage 5 — Vector Storage
+## Stage 5 — Vector Storage ✅
 
-Responsibilities
+### Responsibilities
 
-- Store embeddings
-- Store searchable metadata
-- Enable semantic similarity search
+- Persist vector embeddings
+- Persist embedding metadata
+- Prepare data for semantic search
 
-Planned Vector Databases
+### Current Vector Database
+
+- PostgreSQL + pgvector
+
+### Future Vector Databases
 
 - ChromaDB
-- PGVector
 - Milvus
 - Qdrant
 
-Output
+### Output
 
 ```text
-Vector Index
+Searchable Vector Index
 ```
 
 ---
 
-## Stage 6 — Semantic Retrieval
+## Stage 6 — Semantic Retrieval 🚧
 
-Responsibilities
+### Responsibilities
 
-- Convert user query into embedding
-- Search similar document chunks
+- Convert user query into an embedding
+- Perform vector similarity search
+- Retrieve the most relevant document chunks
 - Apply metadata filtering
 - Rank search results
 
-Future Features
+### Planned Features
 
-- Hybrid Search
+- Top-K Retrieval
 - Metadata Filtering
+- Hybrid Search
 - Re-ranking
 
-Output
+### Output
 
 ```text
 Relevant Document Chunks
@@ -240,14 +254,14 @@ Relevant Document Chunks
 
 ## Stage 7 — Prompt Builder
 
-Responsibilities
+### Responsibilities
 
 - Assemble retrieved context
 - Apply prompt templates
 - Respect token limits
-- Build final LLM prompt
+- Build the final LLM prompt
 
-Output
+### Output
 
 ```text
 Prompt
@@ -257,20 +271,20 @@ Prompt
 
 ## Stage 8 — AI Response
 
-Responsibilities
+### Responsibilities
 
-- Send prompt to configured LLM
-- Generate grounded response
+- Send prompt to the configured LLM
+- Generate grounded responses
 - Return references and citations
 
-Planned Providers
+### Planned Providers
 
 - Ollama
 - OpenAI
 - Anthropic
 - Gemini
 
-Output
+### Output
 
 ```text
 AI Response
@@ -284,36 +298,30 @@ Long-running stages execute asynchronously.
 
 ```text
 Scheduler
-
-↓
-
+        │
+        ▼
 Worker
-
-↓
-
+        │
+        ▼
 Command
-
-↓
-
+        │
+        ▼
 Workflow Service
-
-↓
-
+        │
+        ▼
 Provider Service
-
-↓
-
+        │
+        ▼
 Repository
 ```
 
-Current Workers
+### Current Workers
 
 - DocumentWorker
 - ChunkWorker
-
-Future Workers
-
 - EmbeddingWorker
+
+Future processing stages will follow the same background execution model.
 
 ---
 
@@ -321,16 +329,52 @@ Future Workers
 
 The RAG pipeline follows these principles.
 
-- Single Responsibility
+- Single Responsibility Principle
 - Provider Independence
 - Workflow Separation
 - Background Processing
 - Factory Pattern
+- CQRS
 - ExecutionContext
 - Workflow Services
 - Provider Services
 
-Each stage consumes only the output of the previous stage and remains independent of the underlying provider implementation.
+Each stage consumes only the output produced by the previous stage and remains independent of the underlying provider implementation.
+
+---
+
+# Current Pipeline
+
+```text
+Upload
+   │
+   ▼
+Document
+   │
+   ▼
+DocumentWorker
+   │
+   ▼
+ParsedDocument
+   │
+   ▼
+ChunkWorker
+   │
+   ▼
+DocumentChunk
+   │
+   ▼
+EmbeddingWorker
+   │
+   ▼
+SentenceTransformer
+   │
+   ▼
+DocumentChunkEmbedding (pgvector)
+   │
+   ▼
+READY
+```
 
 ---
 
@@ -339,9 +383,10 @@ Each stage consumes only the output of the previous stage and remains independen
 The Knowledge Assistant is designed to become a provider-agnostic enterprise RAG platform capable of supporting:
 
 - Multiple document formats
+- Multiple parsing providers
 - Multiple chunking strategies
 - Multiple embedding providers
 - Multiple vector databases
 - Multiple Large Language Models
 
-The architecture allows new providers to be introduced with minimal changes to business workflow.
+The architecture allows new providers and technologies to be introduced with minimal changes to the business workflow while maintaining a clean, modular, and extensible design.

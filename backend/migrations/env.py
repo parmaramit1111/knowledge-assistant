@@ -4,7 +4,8 @@ from asyncio import run
 from alembic import context
 
 from sqlalchemy import pool
-from sqlalchemy.ext.asyncio import async_engine_from_config
+# from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import settings
 from app.models import Base
@@ -13,7 +14,7 @@ config = context.config
 
 config.set_main_option(
     "sqlalchemy.url",
-    settings.database_url,
+    str(settings.database_url),
 )
 
 if config.config_file_name is not None:
@@ -28,7 +29,7 @@ def run_migrations_offline() -> None:
     """
 
     context.configure(
-        url=settings.database_url,
+        url=str(settings.database_url),
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -61,9 +62,13 @@ async def run_migrations_online() -> None:
     Run migrations in online mode using AsyncEngine.
     """
 
-    connectable = async_engine_from_config(
-        config.get_section(config.config_ini_section, {}),
-        prefix="sqlalchemy.",
+    # connectable = async_engine_from_config(
+    #     config.get_section(config.config_ini_section, {}),
+    #     prefix="sqlalchemy.",
+    #     poolclass=pool.NullPool,
+    # )
+    connectable = create_async_engine(
+        settings.database_url,
         poolclass=pool.NullPool,
     )
 

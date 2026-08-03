@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.workers.base import BaseWorker
 from app.workers.document.document_worker import DocumentWorker
 from app.workers.document.chunk_worker import ChunkWorker
+from app.workers.document.embedding_worker import EmbeddingWorker
 
 logger = get_logger(__name__)
 
@@ -17,7 +18,8 @@ class Scheduler:
     def __init__(self) -> None:
         self.workers: list[BaseWorker] = [
             DocumentWorker(),
-            ChunkWorker()
+            ChunkWorker(),
+            EmbeddingWorker(),
         ]
 
     async def start(self) -> None:

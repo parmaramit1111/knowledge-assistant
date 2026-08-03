@@ -2,7 +2,7 @@
 
 An enterprise-grade, provider-agnostic Knowledge Assistant built with **FastAPI**, **React**, and a modular **Retrieval-Augmented Generation (RAG)** architecture.
 
-The platform enables organizations to upload documents, build an intelligent knowledge base, and retrieve grounded AI responses using their own data.
+The platform enables organizations to upload documents, build an intelligent knowledge base, perform semantic search, and generate grounded AI responses using their own data.
 
 ---
 
@@ -17,16 +17,16 @@ The goal of this project is to build a production-ready enterprise knowledge pla
 - Produces grounded AI responses
 - Supports multiple embedding providers
 - Supports multiple vector databases
-- Supports multiple LLM providers
+- Supports multiple Large Language Models (LLMs)
 - Remains modular and provider independent
 
-The architecture is designed around Clean Architecture principles where every processing stage has a single responsibility and can evolve independently.
+The architecture follows **Clean Architecture** principles, where every processing stage has a single responsibility and can evolve independently.
 
 ---
 
 # Current Status
 
-## Completed ✅
+## ✅ Completed
 
 ### Backend Foundation
 
@@ -64,18 +64,29 @@ The architecture is designed around Clean Architecture principles where every pr
 - Document Chunk Persistence
 - Background Chunk Worker
 
+### Document Embeddings
+
+- Embedding Provider Architecture
+- Embedding Factory
+- Sentence Transformer Provider
+- Document Embedder Service
+- Background Embedding Worker
+- PostgreSQL pgvector Integration
+- Vector Embedding Persistence
+- End-to-End Embedding Pipeline
+
 ---
 
-## In Progress 🚧
+## 🚧 In Progress
 
-- Embedding Generation
+- Vector Similarity Search
+- Query Embeddings
+- Semantic Retrieval
 
 ---
 
 ## Planned
 
-- Vector Database Integration
-- Semantic Search
 - Prompt Builder
 - AI Chat
 - Conversation History
@@ -88,7 +99,7 @@ The architecture is designed around Clean Architecture principles where every pr
 
 # Processing Pipeline
 
-The backend currently implements the following processing pipeline.
+The backend currently implements the following document ingestion pipeline.
 
 ```text
 Upload Document
@@ -100,19 +111,19 @@ Parse Document
 Chunk Document
         │
         ▼
-Embeddings (Upcoming)
+Generate Embeddings
         │
         ▼
-Vector Database
+Store in PostgreSQL (pgvector)
         │
         ▼
-Semantic Retrieval
+Semantic Retrieval (Next)
         │
         ▼
 Prompt Builder
         │
         ▼
-LLM
+Large Language Model
         │
         ▼
 AI Response
@@ -123,26 +134,26 @@ AI Response
 # Architecture Overview
 
 ```text
-                HTTP Request
-                     │
-                     ▼
-             FastAPI Controller
-                     │
-                     ▼
-             ExecutionContext
-                     │
-                     ▼
-             Command / Query
-                     │
-                     ▼
-          Workflow Service
-                     │
-          ┌──────────┴──────────┐
-          ▼                     ▼
-  Provider Service        Repository
+                    HTTP Request
+                         │
+                         ▼
+                 FastAPI Controller
+                         │
+                         ▼
+                 ExecutionContext
+                         │
+                         ▼
+                 Command / Query
+                         │
+                         ▼
+              Workflow Service
+                         │
+          ┌──────────────┴──────────────┐
+          ▼                             ▼
+  Provider Service               Repository
           │
           ▼
-     Provider Factory
+    Provider Factory
           │
           ▼
         Provider
@@ -156,40 +167,33 @@ Long-running operations execute asynchronously.
 
 ```text
 Scheduler
-
-↓
-
+        │
+        ▼
 Worker
-
-↓
-
+        │
+        ▼
 ExecutionContext
-
-↓
-
+        │
+        ▼
 Command
-
-↓
-
+        │
+        ▼
 Workflow Service
-
-↓
-
+        │
+        ▼
 Provider Service
-
-↓
-
+        │
+        ▼
 Repository
 ```
 
-Current workers
+### Current Workers
 
 - DocumentWorker
 - ChunkWorker
-
-Future workers
-
 - EmbeddingWorker
+
+Each worker processes documents independently, providing isolated transactions and failure recovery.
 
 ---
 
@@ -200,7 +204,8 @@ Future workers
 - Python 3.12
 - FastAPI
 - SQLAlchemy Async
-- PostgreSQL
+- PostgreSQL 18
+- pgvector
 - Alembic
 - Pydantic v2
 
@@ -215,19 +220,21 @@ Future workers
 ### Current
 
 - LangChain Text Splitters
+- Sentence Transformers (`all-MiniLM-L6-v2`)
+- PostgreSQL + pgvector
 
 ### Planned
 
-- Sentence Transformers
 - Ollama
 - OpenAI
-- ChromaDB
+- Anthropic
+- Gemini
 
 ---
 
 # Supported Document Formats
 
-Currently supported
+### Current
 
 - PDF
 - DOCX
@@ -235,7 +242,7 @@ Currently supported
 - HTML
 - Markdown
 
-Future
+### Future
 
 - OCR
 - Images
@@ -254,15 +261,18 @@ knowledge-assistant/
 │   │   ├── api/
 │   │   ├── commands/
 │   │   ├── core/
+│   │   ├── dtos/
 │   │   ├── models/
 │   │   ├── providers/
-│   │   │   ├── parser/
-│   │   │   ├── chunker/
-│   │   │   └── embedding/
+│   │   │   ├── parsers/
+│   │   │   ├── chunkers/
+│   │   │   └── embeddings/
+│   │   ├── queries/
 │   │   ├── repositories/
+│   │   ├── schemas/
 │   │   ├── services/
 │   │   ├── workers/
-│   │   └── schemas/
+│   │   └── utils/
 │   ├── migrations/
 │   ├── storage/
 │   └── tests/
@@ -319,6 +329,8 @@ Every endpoint returns a consistent response.
 GET /api/v1/health
 ```
 
+Returns application health information.
+
 ---
 
 ## Upload Document
@@ -327,7 +339,7 @@ GET /api/v1/health
 POST /api/v1/documents/upload
 ```
 
-Supported document types
+Supported document types:
 
 - PDF
 - DOCX
@@ -341,27 +353,27 @@ Supported document types
 
 Additional documentation is available in the `docs/` directory.
 
-- architecture.md
-- roadmap.md
-- rag-pipeline.md
-- decisions.md
-- api.md
-- setup.md
+- `architecture.md`
+- `roadmap.md`
+- `rag-pipeline.md`
+- `decisions.md`
+- `api.md`
+- `setup.md`
 
 ---
 
 # Roadmap
 
-| Milestone           | Status  |
-| ------------------- | ------- |
-| Backend Foundation  | ✅      |
-| Document Processing | ✅      |
-| Document Chunking   | ✅      |
-| Embeddings          | 🚧      |
-| Vector Database     | Planned |
-| Semantic Search     | Planned |
-| AI Chat             | Planned |
-| Enterprise Features | Planned |
+| Phase                | Status         |
+| -------------------- | -------------- |
+| Backend Foundation   | ✅ Completed   |
+| Document Processing  | ✅ Completed   |
+| Document Chunking    | ✅ Completed   |
+| Document Embeddings  | ✅ Completed   |
+| Vector Search        | 🚧 In Progress |
+| AI Chat              | Planned        |
+| Enterprise Features  | Planned        |
+| Production Readiness | Planned        |
 
 ---
 

@@ -2,7 +2,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .base import BaseRepository
-from app.models.document import Document, ParseStatus, ChunkStatus
+from app.models.document import Document, ParseStatus, ChunkStatus, EmbeddingStatus
 
 class DocumentRepository(BaseRepository[Document]):
 
@@ -27,6 +27,15 @@ class DocumentRepository(BaseRepository[Document]):
             Document.is_deleted.is_(False),
             Document.parse_status == ParseStatus.COMPLETED,
             Document.chunk_status == ChunkStatus.PENDING,
+            limit=limit,
+        )
+
+    async def get_pending_for_embedding(self, limit: int,):
+        return await self.find(
+            Document.is_deleted.is_(False),
+            Document.parse_status == ParseStatus.COMPLETED,
+            Document.chunk_status == ChunkStatus.COMPLETED,
+            Document.embedding_status == EmbeddingStatus.PENDING,
             limit=limit,
         )
 

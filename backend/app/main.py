@@ -9,6 +9,8 @@ from app.core.lifecycle import lifespan
 from app.core.logging import setup_logging
 from app.core.handlers.exception_handlers import register_exception_handlers
 
+import app.providers.embeddings
+
 setup_logging()
 
 app = FastAPI(
