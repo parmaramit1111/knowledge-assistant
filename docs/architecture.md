@@ -23,32 +23,32 @@ The backend is built around the following architectural patterns:
 # Architecture Overview
 
 ```text
-                HTTP Request
-                     │
-                     ▼
-             FastAPI Controller
-                     │
-                     ▼
-             ExecutionContext
-                     │
-                     ▼
-             Command / Query
-                     │
-                     ▼
-          Workflow Service
-                     │
-          ┌──────────┴──────────┐
-          ▼                     ▼
-  Provider Service        Repository
+                    HTTP Request
+                         │
+                         ▼
+                 FastAPI Controller
+                         │
+                         ▼
+                 ExecutionContext
+                         │
+                         ▼
+                 Command / Query
+                         │
+                         ▼
+              Workflow Service
+                         │
+          ┌──────────────┴──────────────┐
+          ▼                             ▼
+  Provider Service               Repository
           │
           ▼
-     Provider Factory
+    Provider Factory
           │
           ▼
         Provider
 ```
 
-Cross-cutting concerns
+### Cross-cutting Concerns
 
 - Transactions
 - Logging
@@ -86,11 +86,12 @@ backend/
 │   ├── api/
 │   ├── commands/
 │   ├── core/
+│   ├── dtos/
 │   ├── models/
 │   ├── providers/
-│   │   ├── parser/
-│   │   ├── chunker/
-│   │   └── embedding/
+│   │   ├── parsers/
+│   │   ├── chunkers/
+│   │   └── embeddings/
 │   ├── queries/
 │   ├── repositories/
 │   ├── schemas/
@@ -109,13 +110,13 @@ backend/
 
 ## API Layer
 
-Location
+**Location**
 
 ```
 app/api/
 ```
 
-Responsibilities
+### Responsibilities
 
 - Define REST endpoints
 - Validate requests
@@ -128,47 +129,49 @@ Controllers never contain business logic.
 
 ## ExecutionContext
 
-Location
+**Location**
 
 ```
 app/core/execution/
 ```
 
-Purpose
+### Purpose
 
-ExecutionContext manages the lifecycle of a request or background operation.
+ExecutionContext manages the lifecycle of an HTTP request or background task.
 
-Responsibilities
+### Responsibilities
 
 - Create database session
 - Create repositories
-- Create services
+- Create workflow services
+- Create provider services
 - Dispose resources
-- Share dependencies through Commands
+- Share dependencies across Commands and Queries
 
-ExecutionContext acts as the application's Dependency Injection container.
+ExecutionContext acts as the application's dependency container.
 
 ---
 
 ## Commands
 
-Location
+**Location**
 
 ```
 app/commands/
 ```
 
-Purpose
+### Purpose
 
 Commands represent write operations.
 
-Examples
+### Examples
 
 - UploadDocumentCommand
 - ParseDocumentCommand
 - ChunkDocumentCommand
+- EmbedDocumentCommand
 
-Responsibilities
+### Responsibilities
 
 - Receive validated input
 - Execute application use cases
@@ -180,23 +183,23 @@ Commands never access repositories directly.
 
 ## Queries
 
-Location
+**Location**
 
 ```
 app/queries/
 ```
 
-Purpose
+### Purpose
 
 Queries represent read operations.
 
-Examples
+### Examples
 
 - GetDocumentQuery
 - SearchDocumentsQuery
 - HealthCheckQuery
 
-Queries never modify data.
+Queries never modify application state.
 
 ---
 
@@ -208,17 +211,18 @@ The application separates services into two categories.
 
 ## Workflow Services
 
-Purpose
+### Purpose
 
 Workflow services orchestrate business processes.
 
-Examples
+### Examples
 
 - DocumentWorkflowService
 - DocumentProcessingService
 - DocumentChunkingService
+- DocumentEmbeddingService
 
-Responsibilities
+### Responsibilities
 
 - Business workflow
 - State transitions
@@ -232,16 +236,17 @@ Workflow services own the application workflow.
 
 ## Provider Services
 
-Purpose
+### Purpose
 
-Provider services perform business transformations.
+Provider services perform business transformations using external providers.
 
-Examples
+### Examples
 
 - DocumentParserService
 - DocumentChunkerService
+- DocumentEmbedderService
 
-Responsibilities
+### Responsibilities
 
 - Select providers
 - Execute providers
@@ -253,19 +258,19 @@ Provider services never perform persistence or workflow management.
 
 # Providers
 
-Location
+**Location**
 
 ```
 app/providers/
 ```
 
-Purpose
+### Purpose
 
 Providers integrate external libraries and technologies.
 
-Examples
+### Current Providers
 
-Document Parsers
+#### Document Parsers
 
 - PDF Parser
 - Word Parser
@@ -273,15 +278,19 @@ Document Parsers
 - Markdown Parser
 - Text Parser
 
-Chunkers
+#### Chunkers
 
 - Recursive Character Splitter
 
-Future Providers
+#### Embeddings
 
-- OpenAI Embeddings
-- Sentence Transformers
+- Sentence Transformers (`all-MiniLM-L6-v2`)
+
+### Future Providers
+
 - Ollama Embeddings
+- OpenAI Embeddings
+- Additional embedding providers
 
 Providers contain integration logic only.
 
@@ -289,9 +298,7 @@ Providers contain integration logic only.
 
 # Provider Factories
 
-Factories select the appropriate provider.
-
-Example
+Factories select the appropriate provider implementation.
 
 ```text
 ParserFactory
@@ -313,46 +320,37 @@ ChunkerFactory
 RecursiveChunker
 ```
 
-Future
-
 ```text
 EmbeddingFactory
 
 ↓
 
-OpenAI
-Sentence Transformers
-Ollama
+SentenceTransformerEmbedding
+(OpenAI, Ollama - Future)
 ```
 
-Business logic never depends on a specific provider implementation.
+Business workflow never depends on a concrete provider implementation.
 
 ---
 
 # Repositories
 
-Location
+**Location**
 
 ```
 app/repositories/
 ```
 
-Purpose
+### Responsibilities
 
-Repositories provide persistence.
-
-Responsibilities
-
-- CRUD
+- CRUD operations
 - Search
 - Persistence
-- Database Queries
+- Database queries
 
-Repositories never contain business logic.
+Every repository inherits from the generic `BaseRepository`.
 
-Every repository inherits from the generic BaseRepository.
-
-Shared functionality
+Shared functionality includes:
 
 - add()
 - add_many()
@@ -364,50 +362,44 @@ Shared functionality
 - exists()
 - count()
 
+Repositories never contain business logic.
+
 ---
 
 # Models
 
-Location
+**Location**
 
 ```
 app/models/
 ```
 
-Purpose
+### Responsibilities
 
-Database entities mapped through SQLAlchemy.
-
-Responsibilities
-
-- Persistence mapping
+- SQLAlchemy entity mapping
 - Relationships
-- Database constraints
+- Constraints
+- Persistence
 
-Models are never returned directly by the API.
+Models are never exposed directly through the API.
 
 ---
 
 # Schemas
 
-Location
+**Location**
 
 ```
 app/schemas/
 ```
 
-Purpose
-
-Public API contracts.
-
-Contains
+### Responsibilities
 
 - Request Models
 - Response Models
-- DTOs
-- ApiResponse
+- API Contracts
 
-Schemas remain independent of persistence models.
+Schemas remain independent from persistence models.
 
 ---
 
@@ -415,41 +407,32 @@ Schemas remain independent of persistence models.
 
 ```text
 Client
-
-↓
-
+    │
+    ▼
 Controller
-
-↓
-
+    │
+    ▼
 ExecutionContext
-
-↓
-
+    │
+    ▼
 Command
-
-↓
-
+    │
+    ▼
 Workflow Service
-
-↓
-
+    │
+    ▼
 Provider Service
-
-↓
-
+    │
+    ▼
 Provider
-
-↓
-
+    │
+    ▼
 Repository
-
-↓
-
+    │
+    ▼
 Commit / Rollback
-
-↓
-
+    │
+    ▼
 API Response
 ```
 
@@ -457,141 +440,112 @@ API Response
 
 # Background Processing
 
-The application processes long-running operations asynchronously.
-
-Architecture
+Long-running operations execute asynchronously.
 
 ```text
 Scheduler
-
-↓
-
+    │
+    ▼
 Worker
-
-↓
-
+    │
+    ▼
 ExecutionContext
-
-↓
-
+    │
+    ▼
 Command
-
-↓
-
+    │
+    ▼
 Workflow Service
-
-↓
-
+    │
+    ▼
 Provider Service
-
-↓
-
+    │
+    ▼
 Repository
 ```
 
-Current Workers
+### Current Workers
 
 - DocumentWorker
 - ChunkWorker
-
-Future Workers
-
 - EmbeddingWorker
 
-Each document is processed inside its own ExecutionContext, providing independent transactions and failure isolation.
+Each document is processed inside its own ExecutionContext, providing isolated transactions and failure recovery.
 
 ---
 
 # Transaction Management
 
-Every Command executes inside a transaction.
-
-Transaction lifecycle
+Every Command executes inside an ambient transaction.
 
 ```text
 ExecutionContext
-
-↓
-
+    │
+    ▼
 Create AsyncSession
-
-↓
-
+    │
+    ▼
 Execute Command
-
-↓
-
+    │
+    ▼
 Workflow Service
-
-↓
-
+    │
+    ▼
 Repository
-
-↓
-
-Commit
-
-or
-
-Rollback
-
-↓
-
+    │
+    ▼
+Commit / Rollback
+    │
+    ▼
 Dispose Session
 ```
-
-Each background task receives an isolated transaction.
 
 ---
 
 # Dependency Management
 
-Dependencies are managed through ExecutionContext.
+Dependencies are centrally managed through ExecutionContext.
 
 ```text
 ExecutionContext
-
-↓
-
+        │
+        ▼
 Repositories
-
-↓
-
+        │
+        ▼
 Workflow Services
-
-↓
-
+        │
+        ▼
 Provider Services
-
-↓
-
-Commands
+        │
+        ▼
+Commands / Queries
 ```
 
-This centralizes dependency creation and eliminates service factories.
+This eliminates the need for external dependency injection frameworks.
 
 ---
 
 # CQRS
 
-The application separates reads from writes.
+The application separates write and read operations.
 
-Commands
+### Commands
 
 - Create
 - Update
 - Delete
 - Background Processing
 
-Queries
+### Queries
 
-- Search
 - Read
+- Search
 - Retrieve
 
-Benefits
+Benefits:
 
-- Clear separation of responsibilities
+- Clear responsibility separation
 - Easier testing
 - Better scalability
 
@@ -603,35 +557,32 @@ Global exception handlers convert exceptions into standardized API responses.
 
 ```text
 ValidationException
-
-↓
-
+        │
+        ▼
 HTTP 400
 ```
 
 ```text
 NotFoundException
-
-↓
-
+        │
+        ▼
 HTTP 404
 ```
 
 ```text
 Unhandled Exception
-
-↓
-
+        │
+        ▼
 HTTP 500
 ```
 
-Background workers log failures while maintaining workflow state.
+Background workers log failures while preserving workflow state.
 
 ---
 
 # Standard API Response
 
-Every endpoint returns
+Every endpoint returns:
 
 ```json
 {
@@ -648,65 +599,60 @@ Every endpoint returns
 
 # Database
 
-Database
+### Database
 
-- PostgreSQL
+- PostgreSQL 18
 
-ORM
+### Extensions
+
+- pgvector
+
+### ORM
 
 - SQLAlchemy Async
 
-Migration
+### Migration
 
 - Alembic
 
-Features
+### Features
 
 - UUID Primary Keys
 - Async Queries
 - Connection Pooling
 - Transaction Management
+- Vector Embeddings
 
 ---
 
-# Processing Pipeline
-
-The current document processing pipeline is
+# Current Processing Pipeline
 
 ```text
 Upload
-
-↓
-
+    │
+    ▼
 Parse
-
-↓
-
+    │
+    ▼
 Chunk
-
-↓
-
-Embeddings (Upcoming)
-
-↓
-
-Vector Database
-
-↓
-
-Retrieval
-
-↓
-
+    │
+    ▼
+Generate Embeddings
+    │
+    ▼
+PostgreSQL (pgvector)
+    │
+    ▼
+Semantic Retrieval (Next)
+    │
+    ▼
 Prompt Builder
-
-↓
-
+    │
+    ▼
 LLM
-
-↓
-
-Response
+    │
+    ▼
+Grounded Response
 ```
 
 ---
@@ -715,7 +661,7 @@ Response
 
 The architecture is provider-agnostic.
 
-Document Parsers
+### Document Parsers
 
 - PDF
 - DOCX
@@ -723,38 +669,38 @@ Document Parsers
 - HTML
 - Markdown
 
-Chunkers
+### Chunkers
 
 - Recursive Character Splitter
 - Semantic Splitter (Future)
 
-Embeddings
+### Embeddings
 
 - Sentence Transformers
 - Ollama
 - OpenAI
 
-Vector Databases
+### Vector Databases
 
+- PostgreSQL (pgvector)
 - ChromaDB
-- PGVector
 - Milvus
 - Qdrant
 
-LLMs
+### Large Language Models
 
 - Ollama
 - OpenAI
 - Anthropic
 - Gemini
 
-Adding a new provider should require no changes to business workflow.
+Adding a new provider should require no changes to the application workflow.
 
 ---
 
 # Engineering Goals
 
-The architecture is designed to remain
+The architecture is designed to remain:
 
 - Modular
 - Extensible
