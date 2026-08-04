@@ -25,9 +25,27 @@ class SentenceTransformerEmbedding(BaseEmbedding):
         return settings.embedding_model
 
     def __init__(self) -> None:
+        print("SentenceTransformer initialized")
         self.model = SentenceTransformer(
             settings.embedding_model,
         )
+
+    async def _embed(
+        self,
+        text: str,
+    ) -> list[float]:
+        """
+        Generate an embedding vector for a document chunk.
+        """
+
+        embedding = self.model.encode(
+            text,
+            convert_to_numpy=True,
+            normalize_embeddings=True,
+            show_progress_bar=False,
+        )
+
+        return embedding.tolist()
 
     async def embed(
         self,
@@ -37,10 +55,13 @@ class SentenceTransformerEmbedding(BaseEmbedding):
         Generate an embedding vector for a document chunk.
         """
 
-        embedding = self.model.encode(
-            document_chunk.content,
-            convert_to_numpy=True,
-            normalize_embeddings=True,
-        )
+        return await self._embed(document_chunk.content)
 
-        return embedding.tolist()
+    async def embed_text(
+        self,
+        text: str,
+    ) -> list[float]:
+        """
+        Generate an embedding vector for a document chunk.
+        """
+        return await self._embed(text)

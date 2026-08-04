@@ -17,6 +17,10 @@ from app.services.document_chunking_service import DocumentChunkingService
 from app.services.document_chunker_service import DocumentChunkerService
 from app.services.document_embedder_service import DocumentEmbedderService
 from app.services.document_embedding_service import DocumentEmbeddingService
+from app.services.document_search_service import DocumentSearchService
+from app.queries.search.search_documents_query import SearchDocumentsQuery
+from app.services.query_embedder_service import QueryEmbedderService
+
 
 class ExecutionContext:
 
@@ -112,4 +116,21 @@ class ExecutionContext:
             document_chunk_embedding_repository=self.document_chunk_embedding_repository,
             document_workflow_service=self.document_workflow_service,
             document_embedder_service=self.document_embedder_service,
+        )
+
+    @cached_property
+    def query_embedder_service(self):
+        return QueryEmbedderService()
+
+    @cached_property
+    def document_search_service(self):
+        return DocumentSearchService(
+            document_chunk_embedding_repository=self.document_chunk_embedding_repository,
+            query_embedder_service=self.query_embedder_service,
+        )
+
+    @cached_property
+    def search_documents_query(self):
+        return SearchDocumentsQuery(
+            document_search_service=self.document_search_service
         )
