@@ -21,7 +21,16 @@ class RecursiveChunker(BaseChunker):
     def __init__(self):
         self._splitter = RecursiveCharacterTextSplitter(
             chunk_size=settings.chunk_size,
-            chunk_overlap=settings.chunk_overlap
+            chunk_overlap=settings.chunk_overlap,
+            separators=[
+                "\n\n",   # Paragraph
+                "\n",     # New line
+                ". ",     # Sentence
+                "? ",     # Question
+                "! ",     # Exclamation
+                " ",      # Word
+                "",       # Character (last resort)
+            ],
         )
 
     async def chunk(
