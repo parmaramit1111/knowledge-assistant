@@ -14,6 +14,7 @@ The goal of this project is to build a production-ready enterprise knowledge pla
 - Builds semantic knowledge from uploaded documents
 - Generates vector embeddings
 - Performs semantic similarity search
+- Retrieves relevant context for AI applications
 - Produces grounded AI responses
 - Supports multiple embedding providers
 - Supports multiple vector databases
@@ -61,6 +62,8 @@ The architecture follows **Clean Architecture** principles, where every processi
 
 - Recursive Character Splitter
 - Chunker Factory
+- Optimized Chunking (800 / 200)
+- Custom Chunk Separators
 - Document Chunk Persistence
 - Background Chunk Worker
 
@@ -70,24 +73,32 @@ The architecture follows **Clean Architecture** principles, where every processi
 - Embedding Factory
 - Sentence Transformer Provider
 - Document Embedder Service
+- Query Embedder Service
 - Background Embedding Worker
 - PostgreSQL pgvector Integration
 - Vector Embedding Persistence
 - End-to-End Embedding Pipeline
 
+### Semantic Search
+
+- Search API
+- Query Embedding Pipeline
+- PGVector Cosine Similarity Search
+- Ranked Search Results
+- Document Metadata Retrieval
+- End-to-End Semantic Retrieval Pipeline
+
 ---
 
 ## 🚧 In Progress
 
-- Vector Similarity Search
-- Query Embeddings
-- Semantic Retrieval
+- Prompt Builder
+- LLM Integration
 
 ---
 
 ## Planned
 
-- Prompt Builder
 - AI Chat
 - Conversation History
 - Authentication
@@ -99,7 +110,7 @@ The architecture follows **Clean Architecture** principles, where every processi
 
 # Processing Pipeline
 
-The backend currently implements the following document ingestion pipeline.
+The backend currently implements the following Retrieval-Augmented Generation (RAG) ingestion pipeline.
 
 ```text
 Upload Document
@@ -117,7 +128,7 @@ Generate Embeddings
 Store in PostgreSQL (pgvector)
         │
         ▼
-Semantic Retrieval (Next)
+Semantic Search
         │
         ▼
 Prompt Builder
@@ -219,9 +230,10 @@ Each worker processes documents independently, providing isolated transactions a
 
 ### Current
 
-- LangChain Text Splitters
+- LangChain Recursive Character Text Splitter
 - Sentence Transformers (`all-MiniLM-L6-v2`)
 - PostgreSQL + pgvector
+- Semantic Vector Search
 
 ### Planned
 
@@ -349,6 +361,16 @@ Supported document types:
 
 ---
 
+## Semantic Search
+
+```http
+POST /api/v1/search
+```
+
+Performs semantic similarity search across indexed document chunks and returns ranked search results.
+
+---
+
 # Documentation
 
 Additional documentation is available in the `docs/` directory.
@@ -370,7 +392,8 @@ Additional documentation is available in the `docs/` directory.
 | Document Processing  | ✅ Completed   |
 | Document Chunking    | ✅ Completed   |
 | Document Embeddings  | ✅ Completed   |
-| Vector Search        | 🚧 In Progress |
+| Semantic Search      | ✅ Completed   |
+| Prompt Builder       | 🚧 In Progress |
 | AI Chat              | Planned        |
 | Enterprise Features  | Planned        |
 | Production Readiness | Planned        |

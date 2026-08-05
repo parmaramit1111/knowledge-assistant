@@ -40,3 +40,13 @@ class BaseEmbedding(ABC):
         Generate an embedding vector for a document chunk.
         """
         ...
+
+    @abstractmethod
+    async def embed_text(
+        self,
+        text: str,
+    ) -> list[float]:
+        """
+        Generate an embedding vector for a given text.
+        """
+        ...

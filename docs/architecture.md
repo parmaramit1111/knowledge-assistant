@@ -135,20 +135,7 @@ Controllers never contain business logic.
 app/core/execution/
 ```
 
-### Purpose
-
-ExecutionContext manages the lifecycle of an HTTP request or background task.
-
-### Responsibilities
-
-- Create database session
-- Create repositories
-- Create workflow services
-- Create provider services
-- Dispose resources
-- Share dependencies across Commands and Queries
-
-ExecutionContext acts as the application's dependency container.
+ExecutionContext manages the lifecycle of an HTTP request or background task by creating repositories, services and a database session for each execution scope.
 
 ---
 
@@ -160,10 +147,6 @@ ExecutionContext acts as the application's dependency container.
 app/commands/
 ```
 
-### Purpose
-
-Commands represent write operations.
-
 ### Examples
 
 - UploadDocumentCommand
@@ -171,13 +154,7 @@ Commands represent write operations.
 - ChunkDocumentCommand
 - EmbedDocumentCommand
 
-### Responsibilities
-
-- Receive validated input
-- Execute application use cases
-- Coordinate workflow through services
-
-Commands never access repositories directly.
+Commands execute write operations and coordinate business workflows.
 
 ---
 
@@ -189,17 +166,13 @@ Commands never access repositories directly.
 app/queries/
 ```
 
-### Purpose
-
-Queries represent read operations.
-
 ### Examples
 
 - GetDocumentQuery
 - SearchDocumentsQuery
 - HealthCheckQuery
 
-Queries never modify application state.
+Queries execute read operations without modifying application state.
 
 ---
 
@@ -211,48 +184,28 @@ The application separates services into two categories.
 
 ## Workflow Services
 
-### Purpose
-
-Workflow services orchestrate business processes.
-
-### Examples
+### Current Services
 
 - DocumentWorkflowService
 - DocumentProcessingService
 - DocumentChunkingService
 - DocumentEmbeddingService
+- **DocumentSearchService**
 
-### Responsibilities
-
-- Business workflow
-- State transitions
-- Repository coordination
-- Background processing
-- Error handling
-
-Workflow services own the application workflow.
+Workflow services orchestrate business processes and coordinate repositories and provider services.
 
 ---
 
 ## Provider Services
 
-### Purpose
-
-Provider services perform business transformations using external providers.
-
-### Examples
+### Current Services
 
 - DocumentParserService
 - DocumentChunkerService
 - DocumentEmbedderService
+- **QueryEmbedderService**
 
-### Responsibilities
-
-- Select providers
-- Execute providers
-- Transform domain models
-
-Provider services never perform persistence or workflow management.
+Provider services encapsulate provider-specific logic and never perform persistence.
 
 ---
 
@@ -263,10 +216,6 @@ Provider services never perform persistence or workflow management.
 ```
 app/providers/
 ```
-
-### Purpose
-
-Providers integrate external libraries and technologies.
 
 ### Current Providers
 
@@ -290,7 +239,7 @@ Providers integrate external libraries and technologies.
 
 - Ollama Embeddings
 - OpenAI Embeddings
-- Additional embedding providers
+- Additional Embedding Providers
 
 Providers contain integration logic only.
 
@@ -326,7 +275,8 @@ EmbeddingFactory
 ↓
 
 SentenceTransformerEmbedding
-(OpenAI, Ollama - Future)
+OpenAIEmbedding (Future)
+OllamaEmbedding (Future)
 ```
 
 Business workflow never depends on a concrete provider implementation.
@@ -341,28 +291,15 @@ Business workflow never depends on a concrete provider implementation.
 app/repositories/
 ```
 
-### Responsibilities
+### Current Responsibilities
 
 - CRUD operations
 - Search
 - Persistence
-- Database queries
+- Vector Similarity Search
+- Database Queries
 
-Every repository inherits from the generic `BaseRepository`.
-
-Shared functionality includes:
-
-- add()
-- add_many()
-- update()
-- delete()
-- get_by_id()
-- find()
-- find_one()
-- exists()
-- count()
-
-Repositories never contain business logic.
+Repositories remain responsible only for data access and never contain business logic.
 
 ---
 
@@ -374,14 +311,7 @@ Repositories never contain business logic.
 app/models/
 ```
 
-### Responsibilities
-
-- SQLAlchemy entity mapping
-- Relationships
-- Constraints
-- Persistence
-
-Models are never exposed directly through the API.
+Models represent persistence entities and are never exposed directly through the API.
 
 ---
 
@@ -393,13 +323,7 @@ Models are never exposed directly through the API.
 app/schemas/
 ```
 
-### Responsibilities
-
-- Request Models
-- Response Models
-- API Contracts
-
-Schemas remain independent from persistence models.
+Schemas define public API contracts and remain independent from persistence models.
 
 ---
 
@@ -415,7 +339,7 @@ Controller
 ExecutionContext
     │
     ▼
-Command
+Command / Query
     │
     ▼
 Workflow Service
@@ -424,23 +348,15 @@ Workflow Service
 Provider Service
     │
     ▼
-Provider
-    │
-    ▼
 Repository
     │
     ▼
-Commit / Rollback
-    │
-    ▼
-API Response
+Commit / Response
 ```
 
 ---
 
 # Background Processing
-
-Long-running operations execute asynchronously.
 
 ```text
 Scheduler
@@ -470,41 +386,17 @@ Repository
 - ChunkWorker
 - EmbeddingWorker
 
-Each document is processed inside its own ExecutionContext, providing isolated transactions and failure recovery.
+Each worker processes documents independently using its own ExecutionContext and transaction.
 
 ---
 
 # Transaction Management
 
-Every Command executes inside an ambient transaction.
-
-```text
-ExecutionContext
-    │
-    ▼
-Create AsyncSession
-    │
-    ▼
-Execute Command
-    │
-    ▼
-Workflow Service
-    │
-    ▼
-Repository
-    │
-    ▼
-Commit / Rollback
-    │
-    ▼
-Dispose Session
-```
+Every Command executes inside an ambient transaction managed by ExecutionContext.
 
 ---
 
 # Dependency Management
-
-Dependencies are centrally managed through ExecutionContext.
 
 ```text
 ExecutionContext
@@ -522,67 +414,36 @@ Provider Services
 Commands / Queries
 ```
 
-This eliminates the need for external dependency injection frameworks.
+ExecutionContext serves as the application's dependency container.
 
 ---
 
 # CQRS
 
-The application separates write and read operations.
-
 ### Commands
 
-- Create
-- Update
-- Delete
-- Background Processing
+- Upload
+- Parse
+- Chunk
+- Embed
 
 ### Queries
 
-- Read
 - Search
+- Read
 - Retrieve
-
-Benefits:
-
-- Clear responsibility separation
-- Easier testing
-- Better scalability
 
 ---
 
 # Exception Handling
 
-Global exception handlers convert exceptions into standardized API responses.
-
-```text
-ValidationException
-        │
-        ▼
-HTTP 400
-```
-
-```text
-NotFoundException
-        │
-        ▼
-HTTP 404
-```
-
-```text
-Unhandled Exception
-        │
-        ▼
-HTTP 500
-```
-
-Background workers log failures while preserving workflow state.
+Global exception handlers convert exceptions into standardized API responses while background workers log failures without interrupting pipeline execution.
 
 ---
 
 # Standard API Response
 
-Every endpoint returns:
+Every endpoint returns
 
 ```json
 {
@@ -611,17 +472,13 @@ Every endpoint returns:
 
 - SQLAlchemy Async
 
-### Migration
-
-- Alembic
-
 ### Features
 
 - UUID Primary Keys
 - Async Queries
 - Connection Pooling
-- Transaction Management
 - Vector Embeddings
+- Cosine Similarity Search
 
 ---
 
@@ -637,13 +494,13 @@ Parse
 Chunk
     │
     ▼
-Generate Embeddings
+Embed
     │
     ▼
 PostgreSQL (pgvector)
     │
     ▼
-Semantic Retrieval (Next)
+Semantic Search
     │
     ▼
 Prompt Builder
@@ -658,8 +515,6 @@ Grounded Response
 ---
 
 # Provider Independence
-
-The architecture is provider-agnostic.
 
 ### Document Parsers
 
@@ -694,7 +549,7 @@ The architecture is provider-agnostic.
 - Anthropic
 - Gemini
 
-Adding a new provider should require no changes to the application workflow.
+Adding a new provider should require no changes to business workflow.
 
 ---
 

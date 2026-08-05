@@ -61,6 +61,8 @@
 
 - [x] Recursive Splitter
 - [x] Chunker Factory
+- [x] Optimized Chunking (800 / 200)
+- [x] Custom Chunk Separators
 - [x] Document Chunk Persistence
 - [x] Document Chunk Worker
 - [x] Chunk Workflow
@@ -83,6 +85,7 @@
 - [x] Embedding Factory
 - [x] Sentence Transformer Provider
 - [x] Document Embedder Service
+- [x] Query Embedder Service
 - [x] Document Embedding Workflow
 - [x] Embedding Worker
 - [x] DocumentChunkEmbedding Persistence
@@ -98,38 +101,59 @@
 
 ---
 
-## Phase 5 — Vector Search 🚧
+## Phase 5 — Semantic Search ✅
 
-**Status:** In Progress
+**Status:** Completed
 
-### Planned
+### Completed
 
-- [ ] Query Embedding
-- [ ] pgvector Similarity Search
-- [ ] Top-K Retrieval
+- [x] Search API
+- [x] Query Embedding
+- [x] PGVector Cosine Similarity Search
+- [x] Top-K Retrieval
+- [x] Ranked Search Results
+- [x] Document Metadata Retrieval
+- [x] Retrieval Benchmark Validation
+
+### Future Enhancements
+
 - [ ] Metadata Filtering
 - [ ] Hybrid Search
 - [ ] Re-ranking
 
 ---
 
-## Phase 6 — AI Chat
+## Phase 6 — Prompt Builder 🚧
+
+**Status:** In Progress
+
+### Planned
+
+- [ ] Context Assembly
+- [ ] Prompt Builder
+- [ ] Context Injection
+- [ ] Prompt Templates
+- [ ] Token Budget Management
+- [ ] Source Attribution
+
+---
+
+## Phase 7 — AI Chat
 
 **Status:** Planned
 
 ### Planned
 
-- [ ] Prompt Builder
-- [ ] Context Injection
 - [ ] Conversation History
 - [ ] Ollama Integration
 - [ ] OpenAI Integration
 - [ ] Anthropic Integration
+- [ ] Gemini Integration
 - [ ] Streaming Responses
 
 ---
 
-## Phase 7 — Enterprise Features
+## Phase 8 — Enterprise Features
 
 **Status:** Planned
 
@@ -144,7 +168,7 @@
 
 ---
 
-## Phase 8 — Production Readiness
+## Phase 9 — Production Readiness
 
 **Status:** Planned
 
@@ -171,7 +195,9 @@
 
 ✅ Embedding Pipeline
 
-🚧 Vector Search
+✅ Semantic Search
+
+🚧 Prompt Builder
 
 ⬜ AI Chat
 
@@ -183,4 +209,4 @@
 
 # Long-Term Vision
 
-Build a provider-agnostic, enterprise-grade Knowledge Assistant capable of ingesting documents, generating embeddings, performing semantic retrieval, and producing grounded AI responses using multiple document formats, embedding providers, vector databases, and language models through a clean, modular, and extensible architecture.
+Build a provider-agnostic, enterprise-grade Knowledge Assistant capable of ingesting documents, generating embeddings, performing semantic retrieval, assembling contextual prompts, and producing grounded AI responses using multiple document formats, embedding providers, vector databases, and Large Language Models through a clean, modular, and extensible architecture.
