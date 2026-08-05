@@ -29,7 +29,8 @@ class DocumentChunkEmbeddingRepository(BaseRepository[DocumentChunkEmbedding]):
         top_k:int
     ) -> list[SearchResult]:
         distance_expr = DocumentChunkEmbedding.embedding.cosine_distance(query_embedding)
-        similarity_score = (1 - distance_expr).label("similarity_score")
+        similarity_expr = (1 - distance_expr)
+        similarity_score = similarity_expr.label("similarity_score")
 
         statement = (
             select(
@@ -48,7 +49,7 @@ class DocumentChunkEmbeddingRepository(BaseRepository[DocumentChunkEmbedding]):
                 Document,
                 Document.id == DocumentChunk.document_id
             )
-            .where(distance_expr < settings.search_similarity_threshold)
+            .where((1 - distance_expr) >= settings.search_similarity_threshold)
             .order_by(distance_expr)
             .limit(top_k)
         )
