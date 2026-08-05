@@ -26,7 +26,7 @@ Generate Embeddings
 Store in PostgreSQL (pgvector)
         │
         ▼
-Semantic Retrieval
+Semantic Search
         │
         ▼
 Prompt Builder
@@ -49,8 +49,8 @@ AI Response
 | Chunking                  | ✅ Completed   |
 | Embeddings                | ✅ Completed   |
 | Vector Storage (pgvector) | ✅ Completed   |
-| Semantic Retrieval        | 🚧 In Progress |
-| Prompt Builder            | Planned        |
+| Semantic Search           | ✅ Completed   |
+| Prompt Builder            | 🚧 In Progress |
 | AI Chat                   | Planned        |
 
 ---
@@ -150,13 +150,16 @@ ParsedDocument
 
 ### Responsibilities
 
-- Split parsed documents into chunks
+- Split parsed documents into semantic chunks
 - Persist document chunks
 - Update chunk workflow
 
 ### Current Strategy
 
 - Recursive Character Splitter
+- Chunk Size: **800**
+- Chunk Overlap: **200**
+- Custom Separators
 
 ### Future Strategies
 
@@ -191,7 +194,7 @@ DocumentChunk[]
 
 - Ollama Embeddings
 - OpenAI Embeddings
-- Additional embedding providers
+- Additional Embedding Providers
 
 ### Output
 
@@ -201,45 +204,26 @@ DocumentChunkEmbedding[]
 
 ---
 
-## Stage 5 — Vector Storage ✅
+## Stage 5 — Semantic Search ✅
 
 ### Responsibilities
 
-- Persist vector embeddings
-- Persist embedding metadata
-- Prepare data for semantic search
+- Convert user queries into embeddings
+- Perform cosine similarity search
+- Retrieve Top-K relevant document chunks
+- Rank results by similarity score
+- Return document metadata with search results
 
-### Current Vector Database
+### Current Implementation
 
 - PostgreSQL + pgvector
+- Cosine Similarity Search
+- Sentence Transformer Query Embeddings
+- Search API
+- Ranked Search Results
 
-### Future Vector Databases
+### Future Enhancements
 
-- ChromaDB
-- Milvus
-- Qdrant
-
-### Output
-
-```text
-Searchable Vector Index
-```
-
----
-
-## Stage 6 — Semantic Retrieval 🚧
-
-### Responsibilities
-
-- Convert user query into an embedding
-- Perform vector similarity search
-- Retrieve the most relevant document chunks
-- Apply metadata filtering
-- Rank search results
-
-### Planned Features
-
-- Top-K Retrieval
 - Metadata Filtering
 - Hybrid Search
 - Re-ranking
@@ -252,7 +236,7 @@ Relevant Document Chunks
 
 ---
 
-## Stage 7 — Prompt Builder
+## Stage 6 — Prompt Builder 🚧
 
 ### Responsibilities
 
@@ -260,6 +244,7 @@ Relevant Document Chunks
 - Apply prompt templates
 - Respect token limits
 - Build the final LLM prompt
+- Attach source references
 
 ### Output
 
@@ -269,7 +254,7 @@ Prompt
 
 ---
 
-## Stage 8 — AI Response
+## Stage 7 — AI Response
 
 ### Responsibilities
 
@@ -373,7 +358,10 @@ SentenceTransformer
 DocumentChunkEmbedding (pgvector)
    │
    ▼
-READY
+Semantic Search
+   │
+   ▼
+READY FOR PROMPT BUILDER
 ```
 
 ---
