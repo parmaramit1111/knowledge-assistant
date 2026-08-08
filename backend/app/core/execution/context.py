@@ -20,6 +20,9 @@ from app.services.document_embedding_service import DocumentEmbeddingService
 from app.services.document_search_service import DocumentSearchService
 from app.queries.search.search_documents_query import SearchDocumentsQuery
 from app.services.query_embedder_service import QueryEmbedderService
+from app.services.document_chat_service import DocumentChatService
+from app.services.prompt_builder_service import PromptBuilderService
+from app.services.llm_service import LLMService
 
 
 class ExecutionContext:
@@ -133,4 +136,20 @@ class ExecutionContext:
     def search_documents_query(self):
         return SearchDocumentsQuery(
             document_search_service=self.document_search_service
+        )
+
+    @cached_property
+    def prompt_builder_service(self):
+        return PromptBuilderService()
+
+    @cached_property
+    def llm_service(self):
+        return LLMService()
+
+    @cached_property
+    def document_chat_service(self):
+        return DocumentChatService(
+            document_search_service=self.document_search_service,
+            prompt_builder_service=self.prompt_builder_service,
+            llm_service=self.llm_service,
         )
