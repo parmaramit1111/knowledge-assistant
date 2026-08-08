@@ -35,23 +35,23 @@ Prompt Builder
 Large Language Model
         │
         ▼
-AI Response
+Grounded AI Response
 ```
 
 ---
 
 # Current Project Status
 
-| Stage                     | Status         |
-| ------------------------- | -------------- |
-| Upload                    | ✅ Completed   |
-| Parsing                   | ✅ Completed   |
-| Chunking                  | ✅ Completed   |
-| Embeddings                | ✅ Completed   |
-| Vector Storage (pgvector) | ✅ Completed   |
-| Semantic Search           | ✅ Completed   |
-| Prompt Builder            | 🚧 In Progress |
-| AI Chat                   | Planned        |
+| Stage                     | Status       |
+| ------------------------- | ------------ |
+| Upload                    | ✅ Completed |
+| Parsing                   | ✅ Completed |
+| Chunking                  | ✅ Completed |
+| Embeddings                | ✅ Completed |
+| Vector Storage (pgvector) | ✅ Completed |
+| Semantic Search           | ✅ Completed |
+| Prompt Builder            | ✅ Completed |
+| AI Chat                   | ✅ Completed |
 
 ---
 
@@ -180,6 +180,7 @@ DocumentChunk[]
 ### Responsibilities
 
 - Generate vector embeddings for every document chunk
+- Generate embeddings for user queries
 - Persist embeddings using pgvector
 - Track embedding workflow
 - Store embedding metadata
@@ -188,7 +189,7 @@ DocumentChunk[]
 
 - Sentence Transformers
   - Model: `all-MiniLM-L6-v2`
-  - Dimensions: 384
+  - Dimensions: **384**
 
 ### Future Providers
 
@@ -236,43 +237,74 @@ Relevant Document Chunks
 
 ---
 
-## Stage 6 — Prompt Builder 🚧
+## Stage 6 — Prompt Builder ✅
 
 ### Responsibilities
 
-- Assemble retrieved context
+- Build prompts using retrieved context
+- Inject document chunks into the prompt
 - Apply prompt templates
-- Respect token limits
-- Build the final LLM prompt
-- Attach source references
+- Add user question
+- Prepare prompts for LLM providers
+
+### Current Implementation
+
+- Prompt Builder Service
+- Prompt Provider Architecture
+- Default Prompt Provider
+- Context Injection
+- Source-aware Prompt Generation
+
+### Future Providers
+
+- Customer Support Prompt
+- FAQ Prompt
+- Technical Documentation Prompt
+- Custom Prompt Templates
 
 ### Output
 
 ```text
-Prompt
+LLM Prompt
 ```
 
 ---
 
-## Stage 7 — AI Response
+## Stage 7 — AI Chat ✅
 
 ### Responsibilities
 
-- Send prompt to the configured LLM
-- Generate grounded responses
-- Return references and citations
+- Receive user questions
+- Retrieve relevant document context
+- Generate grounded AI responses
+- Return source document references
 
-### Planned Providers
+### Current Implementation
+
+- Chat API
+- AskQuestion Command
+- DocumentChatService
+- LLMService
+- LLM Provider Architecture
+- Ollama Provider
+- Local LLM Integration
+
+### Current LLM Provider
 
 - Ollama
+  - Model: `qwen2.5:1.5b`
+
+### Future Providers
+
 - OpenAI
 - Anthropic
 - Gemini
+- Azure OpenAI
 
 ### Output
 
 ```text
-AI Response
+Grounded AI Response
 ```
 
 ---
@@ -361,7 +393,39 @@ DocumentChunkEmbedding (pgvector)
 Semantic Search
    │
    ▼
-READY FOR PROMPT BUILDER
+Prompt Builder
+   │
+   ▼
+Ollama (LLM Provider)
+   │
+   ▼
+Grounded AI Response
+```
+
+---
+
+# Current Architecture
+
+```text
+User Question
+      │
+      ▼
+Query Embedding
+      │
+      ▼
+Semantic Search
+      │
+      ▼
+Prompt Builder
+      │
+      ▼
+LLM Provider
+      │
+      ▼
+Grounded AI Response
+      │
+      ▼
+Source References
 ```
 
 ---
@@ -374,6 +438,7 @@ The Knowledge Assistant is designed to become a provider-agnostic enterprise RAG
 - Multiple parsing providers
 - Multiple chunking strategies
 - Multiple embedding providers
+- Multiple prompt providers
 - Multiple vector databases
 - Multiple Large Language Models
 

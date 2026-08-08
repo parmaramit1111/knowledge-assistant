@@ -73,6 +73,7 @@ The backend follows these principles.
 - Strong Typing
 - Async First
 - Single Responsibility Principle
+- Provider Independence
 
 ---
 
@@ -82,26 +83,28 @@ The backend follows these principles.
 backend/
 │
 ├── app/
-│   │
-│   ├── api/
-│   ├── commands/
-│   ├── core/
-│   ├── dtos/
-│   ├── models/
-│   ├── providers/
-│   │   ├── parsers/
-│   │   ├── chunkers/
-│   │   └── embeddings/
-│   ├── queries/
-│   ├── repositories/
-│   ├── schemas/
-│   ├── services/
-│   ├── workers/
-│   └── utils/
 │
-├── migrations/
-├── storage/
-└── tests/
+├── api/
+├── commands/
+├── core/
+├── dtos/
+├── models/
+├── providers/
+│   ├── parsers/
+│   ├── chunkers/
+│   ├── embeddings/
+│   ├── prompts/
+│   └── llm/
+├── queries/
+├── repositories/
+├── schemas/
+├── services/
+├── workers/
+└── utils/
+
+migrations/
+storage/
+tests/
 ```
 
 ---
@@ -147,14 +150,16 @@ ExecutionContext manages the lifecycle of an HTTP request or background task by 
 app/commands/
 ```
 
-### Examples
+### Current Commands
 
 - UploadDocumentCommand
 - ParseDocumentCommand
 - ChunkDocumentCommand
 - EmbedDocumentCommand
+- SearchDocumentsCommand
+- AskQuestionCommand
 
-Commands execute write operations and coordinate business workflows.
+Commands coordinate business workflows and never contain persistence logic.
 
 ---
 
@@ -166,10 +171,9 @@ Commands execute write operations and coordinate business workflows.
 app/queries/
 ```
 
-### Examples
+### Current Queries
 
 - GetDocumentQuery
-- SearchDocumentsQuery
 - HealthCheckQuery
 
 Queries execute read operations without modifying application state.
@@ -190,7 +194,8 @@ The application separates services into two categories.
 - DocumentProcessingService
 - DocumentChunkingService
 - DocumentEmbeddingService
-- **DocumentSearchService**
+- DocumentSearchService
+- DocumentChatService
 
 Workflow services orchestrate business processes and coordinate repositories and provider services.
 
@@ -203,7 +208,9 @@ Workflow services orchestrate business processes and coordinate repositories and
 - DocumentParserService
 - DocumentChunkerService
 - DocumentEmbedderService
-- **QueryEmbedderService**
+- QueryEmbedderService
+- PromptBuilderService
+- LLMService
 
 Provider services encapsulate provider-specific logic and never perform persistence.
 
@@ -235,11 +242,33 @@ app/providers/
 
 - Sentence Transformers (`all-MiniLM-L6-v2`)
 
+#### Prompts
+
+- Default Prompt Provider
+
+#### Large Language Models
+
+- Ollama (`qwen2.5:1.5b`)
+
 ### Future Providers
+
+#### Embeddings
 
 - Ollama Embeddings
 - OpenAI Embeddings
-- Additional Embedding Providers
+
+#### Prompts
+
+- Technical Support Prompt
+- FAQ Prompt
+- Customer Support Prompt
+
+#### LLMs
+
+- OpenAI
+- Anthropic
+- Gemini
+- Azure OpenAI
 
 Providers contain integration logic only.
 
@@ -251,35 +280,50 @@ Factories select the appropriate provider implementation.
 
 ```text
 ParserFactory
-
-↓
-
-PDF Parser
-Word Parser
-HTML Parser
-Markdown Parser
-Text Parser
+        │
+        ▼
+PDF
+DOCX
+TXT
+HTML
+Markdown
 ```
 
 ```text
 ChunkerFactory
-
-↓
-
+        │
+        ▼
 RecursiveChunker
 ```
 
 ```text
 EmbeddingFactory
-
-↓
-
-SentenceTransformerEmbedding
-OpenAIEmbedding (Future)
-OllamaEmbedding (Future)
+        │
+        ▼
+SentenceTransformer
+OpenAI (Future)
+Ollama (Future)
 ```
 
-Business workflow never depends on a concrete provider implementation.
+```text
+PromptFactory
+        │
+        ▼
+DefaultPrompt
+CustomPrompt (Future)
+```
+
+```text
+LLMFactory
+        │
+        ▼
+Ollama
+OpenAI (Future)
+Anthropic (Future)
+Gemini (Future)
+```
+
+Business workflow never depends on concrete provider implementations.
 
 ---
 
@@ -291,11 +335,11 @@ Business workflow never depends on a concrete provider implementation.
 app/repositories/
 ```
 
-### Current Responsibilities
+### Responsibilities
 
 - CRUD operations
-- Search
 - Persistence
+- Search
 - Vector Similarity Search
 - Database Queries
 
@@ -339,7 +383,7 @@ Controller
 ExecutionContext
     │
     ▼
-Command / Query
+Command
     │
     ▼
 Workflow Service
@@ -348,10 +392,51 @@ Workflow Service
 Provider Service
     │
     ▼
+Provider
+    │
+    ▼
 Repository
     │
     ▼
-Commit / Response
+API Response
+```
+
+---
+
+# Chat Request Lifecycle
+
+```text
+User Question
+      │
+      ▼
+Chat Controller
+      │
+      ▼
+AskQuestionCommand
+      │
+      ▼
+DocumentChatService
+      │
+      ├────────► DocumentSearchService
+      │
+      ├────────► PromptBuilderService
+      │               │
+      │               ▼
+      │         PromptFactory
+      │               │
+      │               ▼
+      │        DefaultPrompt
+      │
+      └────────► LLMService
+                      │
+                      ▼
+                 LLMFactory
+                      │
+                      ▼
+               OllamaProvider
+                      │
+                      ▼
+                 Grounded Response
 ```
 
 ---
@@ -387,74 +472,6 @@ Repository
 - EmbeddingWorker
 
 Each worker processes documents independently using its own ExecutionContext and transaction.
-
----
-
-# Transaction Management
-
-Every Command executes inside an ambient transaction managed by ExecutionContext.
-
----
-
-# Dependency Management
-
-```text
-ExecutionContext
-        │
-        ▼
-Repositories
-        │
-        ▼
-Workflow Services
-        │
-        ▼
-Provider Services
-        │
-        ▼
-Commands / Queries
-```
-
-ExecutionContext serves as the application's dependency container.
-
----
-
-# CQRS
-
-### Commands
-
-- Upload
-- Parse
-- Chunk
-- Embed
-
-### Queries
-
-- Search
-- Read
-- Retrieve
-
----
-
-# Exception Handling
-
-Global exception handlers convert exceptions into standardized API responses while background workers log failures without interrupting pipeline execution.
-
----
-
-# Standard API Response
-
-Every endpoint returns
-
-```json
-{
-  "code": "SUCCESS",
-  "success": true,
-  "message": "...",
-  "result": {},
-  "total_records": null,
-  "request_id": "..."
-}
-```
 
 ---
 
@@ -506,17 +523,17 @@ Semantic Search
 Prompt Builder
     │
     ▼
-LLM
+LLM Provider
     │
     ▼
-Grounded Response
+Grounded AI Response
 ```
 
 ---
 
 # Provider Independence
 
-### Document Parsers
+### Parsers
 
 - PDF
 - DOCX
@@ -535,6 +552,11 @@ Grounded Response
 - Ollama
 - OpenAI
 
+### Prompts
+
+- Default Prompt
+- Custom Prompt (Future)
+
 ### Vector Databases
 
 - PostgreSQL (pgvector)
@@ -549,7 +571,7 @@ Grounded Response
 - Anthropic
 - Gemini
 
-Adding a new provider should require no changes to business workflow.
+Adding a new provider requires no changes to business workflows.
 
 ---
 

@@ -2,7 +2,7 @@
 
 An enterprise-grade, provider-agnostic Knowledge Assistant built with **FastAPI**, **React**, and a modular **Retrieval-Augmented Generation (RAG)** architecture.
 
-The platform enables organizations to upload documents, build an intelligent knowledge base, perform semantic search, and generate grounded AI responses using their own data.
+The platform enables organizations to upload documents, build an intelligent knowledge base, perform semantic search, retrieve relevant context, and generate grounded AI responses using their own data.
 
 ---
 
@@ -16,9 +16,12 @@ The goal of this project is to build a production-ready enterprise knowledge pla
 - Performs semantic similarity search
 - Retrieves relevant context for AI applications
 - Produces grounded AI responses
+- Supports multiple parsing providers
+- Supports multiple chunking strategies
 - Supports multiple embedding providers
-- Supports multiple vector databases
+- Supports multiple prompt providers
 - Supports multiple Large Language Models (LLMs)
+- Supports multiple vector databases
 - Remains modular and provider independent
 
 The architecture follows **Clean Architecture** principles, where every processing stage has a single responsibility and can evolve independently.
@@ -88,19 +91,36 @@ The architecture follows **Clean Architecture** principles, where every processi
 - Document Metadata Retrieval
 - End-to-End Semantic Retrieval Pipeline
 
+### AI Chat (RAG)
+
+- Chat API
+- Ask Question Command
+- Document Chat Service
+- Prompt Builder Service
+- Prompt Provider Architecture
+- Default Prompt Provider
+- LLM Provider Architecture
+- Ollama Provider
+- Prompt Generation
+- Context Injection
+- Grounded AI Responses
+- Source Document References
+- End-to-End RAG Chat Pipeline
+
 ---
 
 ## 🚧 In Progress
 
-- Prompt Builder
-- LLM Integration
+- Conversation History
+- Response Streaming
+- Hybrid Search
+- Re-ranking
+- Retrieval Optimization
 
 ---
 
 ## Planned
 
-- AI Chat
-- Conversation History
 - Authentication
 - Multi-Tenant Support
 - Monitoring
@@ -110,7 +130,7 @@ The architecture follows **Clean Architecture** principles, where every processi
 
 # Processing Pipeline
 
-The backend currently implements the following Retrieval-Augmented Generation (RAG) ingestion pipeline.
+The backend currently implements the following Retrieval-Augmented Generation (RAG) pipeline.
 
 ```text
 Upload Document
@@ -137,7 +157,7 @@ Prompt Builder
 Large Language Model
         │
         ▼
-AI Response
+Grounded AI Response
 ```
 
 ---
@@ -234,10 +254,12 @@ Each worker processes documents independently, providing isolated transactions a
 - Sentence Transformers (`all-MiniLM-L6-v2`)
 - PostgreSQL + pgvector
 - Semantic Vector Search
+- Ollama
+- Prompt Provider Architecture
+- LLM Provider Architecture
 
 ### Planned
 
-- Ollama
 - OpenAI
 - Anthropic
 - Gemini
@@ -278,7 +300,9 @@ knowledge-assistant/
 │   │   ├── providers/
 │   │   │   ├── parsers/
 │   │   │   ├── chunkers/
-│   │   │   └── embeddings/
+│   │   │   ├── embeddings/
+│   │   │   ├── prompts/
+│   │   │   └── llm/
 │   │   ├── queries/
 │   │   ├── repositories/
 │   │   ├── schemas/
@@ -313,23 +337,7 @@ The project follows these architectural principles.
 - Async First
 - Strong Typing
 - Single Responsibility Principle
-
----
-
-# API Response
-
-Every endpoint returns a consistent response.
-
-```json
-{
-  "code": "SUCCESS",
-  "success": true,
-  "message": "Operation completed successfully.",
-  "result": {},
-  "total_records": null,
-  "request_id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-}
-```
+- Provider Independence
 
 ---
 
@@ -341,25 +349,11 @@ Every endpoint returns a consistent response.
 GET /api/v1/health
 ```
 
-Returns application health information.
-
----
-
 ## Upload Document
 
 ```http
 POST /api/v1/documents/upload
 ```
-
-Supported document types:
-
-- PDF
-- DOCX
-- TXT
-- HTML
-- Markdown
-
----
 
 ## Semantic Search
 
@@ -367,7 +361,13 @@ Supported document types:
 POST /api/v1/search
 ```
 
-Performs semantic similarity search across indexed document chunks and returns ranked search results.
+## AI Chat
+
+```http
+POST /api/v1/chat
+```
+
+Returns a grounded AI response using retrieved document context.
 
 ---
 
@@ -393,8 +393,8 @@ Additional documentation is available in the `docs/` directory.
 | Document Chunking    | ✅ Completed   |
 | Document Embeddings  | ✅ Completed   |
 | Semantic Search      | ✅ Completed   |
-| Prompt Builder       | 🚧 In Progress |
-| AI Chat              | Planned        |
+| RAG Chat Pipeline    | ✅ Completed   |
+| Conversation Memory  | 🚧 In Progress |
 | Enterprise Features  | Planned        |
 | Production Readiness | Planned        |
 
