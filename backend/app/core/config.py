@@ -82,6 +82,14 @@ class Settings(BaseSettings):
 
     search_similarity_threshold: float = 0.30
 
+    search_top_k: int = 5
+
+    prompt_provider: str = "default"
+
+    llm_provider: str = "ollama"
+    llm_model: str = "llama3.2"
+    llm_base_url: str = "http://localhost:11434"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=False,
