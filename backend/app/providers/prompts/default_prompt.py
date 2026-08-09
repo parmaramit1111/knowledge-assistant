@@ -1,4 +1,8 @@
+
+from app.models.chat_message import ChatMessage
+
 from .base import BasePrompt
+
 from app.schemas.search_response import SearchResponse
 
 class DefaultPrompt(BasePrompt):
@@ -37,6 +41,7 @@ class DefaultPrompt(BasePrompt):
             self,
             question: str,
             search_response: SearchResponse,
+            chat_history: list[ChatMessage],
         ) -> str:
 
             context: list[str] = []
@@ -60,7 +65,7 @@ class DefaultPrompt(BasePrompt):
 
     ### CHAT HISTORY
 
-    None
+    {'\n\n'.join([f'{msg.role}: {msg.content}' for msg in chat_history])}
 
     ### USER QUERY
 

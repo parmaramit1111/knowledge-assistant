@@ -1,5 +1,7 @@
 from app.core.logging import get_logger
 
+from app.models.chat_message import ChatMessage
+
 from app.schemas.search_response import SearchResponse
 from app.providers.prompts.factory import PromptFactory
 
@@ -11,6 +13,7 @@ class PromptBuilderService:
         self,
         question: str,
         search_response: SearchResponse,
+        chat_history: list[ChatMessage],
     ) -> str:
 
         provider = PromptFactory.get_prompt()
@@ -24,4 +27,5 @@ class PromptBuilderService:
         return await provider.build(
             question,
             search_response,
+            chat_history,
         )
