@@ -55,16 +55,30 @@ class BaseRepository(Generic[T]):
 
         return result.scalar_one_or_none()
 
-    async def find(self, *conditions, limit: int,) -> list[T]:
+    async def find(
+        self,
+        *conditions,
+        limit: int | None = None,
+        offset: int | None = None,
+        order_by=None,
+    ) -> list[T]:
         statement = (
             select(self._model)
-                .where(*conditions)
-                .limit(limit)
+            .where(*conditions)
         )
+
+        if order_by is not None:
+            statement = statement.order_by(order_by)
+
+        if offset is not None:
+            statement = statement.offset(offset)
+
+        if limit is not None:
+            statement = statement.limit(limit)
 
         result = await self._session.execute(statement)
 
-        return list(result.scalars())
+        return list(result.scalars().all())
 
     async def find_one(self, *conditions,) -> T | None:
         statement = (

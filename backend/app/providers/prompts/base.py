@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+from app.models.chat_message import ChatMessage
+
 from app.schemas.search_response import SearchResponse
 
 class BasePrompt(ABC):
@@ -21,5 +23,6 @@ class BasePrompt(ABC):
         self,
         question: str,
         search_response: SearchResponse,
+        chat_history: list[ChatMessage],
     ) -> str:
         ...

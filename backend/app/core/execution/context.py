@@ -8,6 +8,7 @@ from app.repositories.document_repository import DocumentRepository
 from app.repositories.parsed_document_repository import ParsedDocumentRepository
 from app.repositories.document_chunk_repository import DocumentChunkRepository
 from app.repositories.document_chunk_embedding_repository import DocumentChunkEmbeddingRepository
+from app.repositories.chat_message_repository import ChatMessageRepository
 
 from app.services.document_workflow_service import DocumentWorkflowService
 from app.services.document_upload_service import DocumentUploadService
@@ -23,6 +24,7 @@ from app.services.query_embedder_service import QueryEmbedderService
 from app.services.document_chat_service import DocumentChatService
 from app.services.prompt_builder_service import PromptBuilderService
 from app.services.llm_service import LLMService
+from app.services.chat_history_service import ChatHistoryService
 
 
 class ExecutionContext:
@@ -65,6 +67,10 @@ class ExecutionContext:
     @cached_property
     def document_chunk_embedding_repository(self):
         return DocumentChunkEmbeddingRepository(self.session)
+
+    @cached_property
+    def chat_message_repository(self):
+        return ChatMessageRepository(self.session)
 
     #
     # Services
@@ -147,9 +153,14 @@ class ExecutionContext:
         return LLMService()
 
     @cached_property
+    def chat_history_service(self):
+        return ChatHistoryService(self.chat_message_repository)
+
+    @cached_property
     def document_chat_service(self):
         return DocumentChatService(
             document_search_service=self.document_search_service,
             prompt_builder_service=self.prompt_builder_service,
             llm_service=self.llm_service,
+            chat_history_service=self.chat_history_service,
         )
