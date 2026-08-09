@@ -1,14 +1,14 @@
 # Knowledge Assistant
 
-An enterprise-grade, provider-agnostic Knowledge Assistant built with **FastAPI**, **React**, and a modular **Retrieval-Augmented Generation (RAG)** architecture.
+A provider-agnostic Knowledge Assistant built with **FastAPI**, **React**, and a modular **Retrieval-Augmented Generation (RAG)** architecture.
 
-The platform enables organizations to upload documents, build an intelligent knowledge base, perform semantic search, retrieve relevant context, and generate grounded AI responses using their own data.
+The platform enables users to upload documents, build an intelligent knowledge base, perform semantic search, retrieve relevant context, and generate grounded AI responses using their own data.
 
 ---
 
 # Vision
 
-The goal of this project is to build a production-ready enterprise knowledge platform that:
+The goal of this project is to build a production-ready Knowledge Assistant platform that:
 
 - Supports multiple document formats
 - Builds semantic knowledge from uploaded documents
@@ -48,6 +48,7 @@ The architecture follows **Clean Architecture** principles, where every processi
 - Standard API Response
 - Request Correlation ID
 - Local File Storage
+- CORS Configuration
 
 ### Document Processing
 
@@ -107,6 +108,27 @@ The architecture follows **Clean Architecture** principles, where every processi
 - Source Document References
 - End-to-End RAG Chat Pipeline
 
+### Frontend
+
+- React
+- TypeScript
+- Vite
+- Material UI
+- Chat Interface
+- Chat API Integration
+- Conversation State Management
+- Source References
+- PDF Document Upload
+- Drag & Drop Upload
+- Upload Status Handling
+- Upload Success/Error Handling
+- New Chat
+- Sidebar Navigation
+- Collapsible Sidebar
+- Responsive Chat Layout
+- Application Theme
+- Knowledge Assistant Branding
+
 ---
 
 ## 🚧 In Progress
@@ -119,12 +141,15 @@ The architecture follows **Clean Architecture** principles, where every processi
 
 ---
 
-## Planned
+## 📋 Next
 
-- Authentication
-- Multi-Tenant Support
-- Monitoring
+- Docker
+- Local Development Environment
+- Production Configuration
+- Deployment Configuration
 - CI/CD
+- Monitoring
+- Performance Validation
 
 ---
 
@@ -244,6 +269,7 @@ Each worker processes documents independently, providing isolated transactions a
 
 - React
 - TypeScript
+- Vite
 - Material UI
 
 ## AI
@@ -314,6 +340,14 @@ knowledge-assistant/
 │   └── tests/
 │
 ├── frontend/
+│   ├── public/
+│   └── src/
+│       ├── api/
+│       ├── components/
+│       ├── hooks/
+│       ├── pages/
+│       └── ...
+│
 ├── docs/
 ├── scripts/
 └── README.md
@@ -386,17 +420,38 @@ Additional documentation is available in the `docs/` directory.
 
 # Roadmap
 
-| Phase                | Status         |
-| -------------------- | -------------- |
-| Backend Foundation   | ✅ Completed   |
-| Document Processing  | ✅ Completed   |
-| Document Chunking    | ✅ Completed   |
-| Document Embeddings  | ✅ Completed   |
-| Semantic Search      | ✅ Completed   |
-| RAG Chat Pipeline    | ✅ Completed   |
-| Conversation Memory  | 🚧 In Progress |
-| Enterprise Features  | Planned        |
-| Production Readiness | Planned        |
+| Phase                    | Status         |
+| ------------------------ | -------------- |
+| Backend Foundation       | ✅ Completed   |
+| Document Processing      | ✅ Completed   |
+| Document Chunking        | ✅ Completed   |
+| Document Embeddings      | ✅ Completed   |
+| Semantic Search          | ✅ Completed   |
+| Prompt Builder           | ✅ Completed   |
+| RAG Chat Pipeline        | ✅ Completed   |
+| Frontend Chat UI         | ✅ Completed   |
+| Document Upload UI       | ✅ Completed   |
+| Conversation Memory      | 🚧 In Progress |
+| Production Configuration | 📋 Next        |
+| Deployment               | 📋 Next        |
+| CI/CD                    | 📋 Next        |
+| Monitoring               | 📋 Next        |
+
+---
+
+# Project Direction
+
+The public project currently focuses on demonstrating the core capabilities of the Knowledge Assistant:
+
+- Document ingestion
+- Document processing
+- Semantic retrieval
+- Prompt construction
+- Grounded AI generation
+- Provider-independent architecture
+- Full-stack chat experience
+
+Advanced enterprise capabilities are intentionally kept outside the current public implementation.
 
 ---
 

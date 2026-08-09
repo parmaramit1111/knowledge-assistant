@@ -52,6 +52,8 @@ Grounded AI Response
 | Semantic Search           | ✅ Completed |
 | Prompt Builder            | ✅ Completed |
 | AI Chat                   | ✅ Completed |
+| Frontend Chat UI          | ✅ Completed |
+| Document Upload UI        | ✅ Completed |
 
 ---
 
@@ -251,16 +253,19 @@ Relevant Document Chunks
 
 - Prompt Builder Service
 - Prompt Provider Architecture
+- Prompt Factory
 - Default Prompt Provider
+- Context Assembly
 - Context Injection
+- Source Attribution
 - Source-aware Prompt Generation
 
-### Future Providers
+### Future Enhancements
 
-- Customer Support Prompt
-- FAQ Prompt
-- Technical Documentation Prompt
-- Custom Prompt Templates
+- Conversation History
+- Token Budget Management
+- Multiple Prompt Templates
+- Domain-specific Prompt Providers
 
 ### Output
 
@@ -278,6 +283,7 @@ LLM Prompt
 - Retrieve relevant document context
 - Generate grounded AI responses
 - Return source document references
+- Maintain conversation context
 
 ### Current Implementation
 
@@ -286,8 +292,12 @@ LLM Prompt
 - DocumentChatService
 - LLMService
 - LLM Provider Architecture
+- LLM Factory
 - Ollama Provider
 - Local LLM Integration
+- Grounded AI Responses
+- Source References
+- End-to-End RAG Chat Pipeline
 
 ### Current LLM Provider
 
@@ -309,6 +319,81 @@ Grounded AI Response
 
 ---
 
+# Stage 8 — Frontend Experience ✅
+
+The frontend provides the user-facing interface for interacting with the RAG platform.
+
+### Current Implementation
+
+- React
+- TypeScript
+- Vite
+- Material UI
+- Chat Interface
+- Chat API Integration
+- Conversation State Management
+- Source References
+- New Chat
+- Sidebar Navigation
+- Collapsible Sidebar
+- PDF Document Upload
+- Drag & Drop Upload
+- Upload Success/Error Handling
+- Application Theme
+- Knowledge Assistant Branding
+- Backend CORS Integration
+
+### Frontend Architecture
+
+```text
+User
+ │
+ ▼
+React Page
+ │
+ ▼
+UI Components
+ │
+ ▼
+Custom Hooks
+ │
+ ▼
+API Services
+ │
+ ▼
+FastAPI
+```
+
+### Current Frontend API Integration
+
+```text
+Chat UI
+   │
+   ▼
+useChat
+   │
+   ▼
+chat.ts
+   │
+   ▼
+POST /api/v1/chat
+```
+
+```text
+Document Upload UI
+   │
+   ▼
+useDocumentUpload
+   │
+   ▼
+document.ts
+   │
+   ▼
+POST /api/v1/documents/upload
+```
+
+---
+
 # Background Processing
 
 Long-running stages execute asynchronously.
@@ -318,6 +403,9 @@ Scheduler
         │
         ▼
 Worker
+        │
+        ▼
+ExecutionContext
         │
         ▼
 Command
@@ -355,84 +443,207 @@ The RAG pipeline follows these principles.
 - ExecutionContext
 - Workflow Services
 - Provider Services
+- Async First Design
+- Strong Typing
 
-Each stage consumes only the output produced by the previous stage and remains independent of the underlying provider implementation.
+Each stage consumes the output produced by the previous stage and remains independent of the underlying provider implementation.
 
 ---
 
-# Current Pipeline
+# Current End-to-End Pipeline
 
 ```text
-Upload
-   │
-   ▼
-Document
-   │
-   ▼
-DocumentWorker
-   │
-   ▼
-ParsedDocument
-   │
-   ▼
-ChunkWorker
-   │
-   ▼
-DocumentChunk
-   │
-   ▼
-EmbeddingWorker
-   │
-   ▼
-SentenceTransformer
-   │
-   ▼
-DocumentChunkEmbedding (pgvector)
-   │
-   ▼
-Semantic Search
-   │
-   ▼
-Prompt Builder
-   │
-   ▼
-Ollama (LLM Provider)
-   │
-   ▼
-Grounded AI Response
+                    DOCUMENT INGESTION
+                           │
+                           ▼
+                      Upload API
+                           │
+                           ▼
+                       Document
+                           │
+                           ▼
+                    DocumentWorker
+                           │
+                           ▼
+                    Document Parser
+                           │
+                           ▼
+                    ParsedDocument
+                           │
+                           ▼
+                      ChunkWorker
+                           │
+                           ▼
+                     DocumentChunk
+                           │
+                           ▼
+                   EmbeddingWorker
+                           │
+                           ▼
+                 Sentence Transformer
+                           │
+                           ▼
+             DocumentChunkEmbedding
+                           │
+                           ▼
+                 PostgreSQL (pgvector)
+                           │
+                           │
+                           │
+                    USER QUESTION
+                           │
+                           ▼
+                       Chat API
+                           │
+                           ▼
+                   Query Embedding
+                           │
+                           ▼
+                   Semantic Search
+                           │
+                           ▼
+                  Relevant Chunks
+                           │
+                           ▼
+                    Prompt Builder
+                           │
+                           ▼
+                    LLM Provider
+                           │
+                           ▼
+                 Grounded AI Response
+                           │
+                           ▼
+                  Source References
+                           │
+                           ▼
+                     React Chat UI
 ```
 
 ---
 
-# Current Architecture
+# Current Query Architecture
 
 ```text
 User Question
       │
       ▼
-Query Embedding
+Chat API
       │
       ▼
-Semantic Search
+DocumentChatService
       │
-      ▼
-Prompt Builder
+      ├──────────────► Chat History
       │
-      ▼
-LLM Provider
+      ├──────────────► DocumentSearchService
+      │                       │
+      │                       ▼
+      │                 Query Embedding
+      │                       │
+      │                       ▼
+      │                 Semantic Search
       │
-      ▼
-Grounded AI Response
+      ├──────────────► PromptBuilderService
+      │                       │
+      │                       ▼
+      │                 Prompt Provider
       │
-      ▼
-Source References
+      └──────────────► LLMService
+                              │
+                              ▼
+                         LLM Provider
+                              │
+                              ▼
+                     Grounded Response
+                              │
+                              ▼
+                       Source References
 ```
+
+---
+
+# Provider Architecture
+
+The RAG pipeline is designed around provider abstractions.
+
+```text
+                    Provider Interface
+                           │
+          ┌────────────────┼────────────────┐
+          ▼                ▼                ▼
+       Provider A       Provider B       Provider C
+```
+
+### Parser Providers
+
+- PDF
+- DOCX
+- TXT
+- HTML
+- Markdown
+
+### Chunking Providers
+
+- Recursive Character Splitter
+- Semantic Splitter
+- Markdown Splitter
+- Token Splitter
+
+### Embedding Providers
+
+- Sentence Transformers
+- Ollama
+- OpenAI
+
+### Prompt Providers
+
+- Default Prompt
+- Custom Prompt
+
+### LLM Providers
+
+- Ollama
+- OpenAI
+- Anthropic
+- Gemini
+- Azure OpenAI
+
+New providers can be introduced behind the existing provider architecture without changing the core workflow.
+
+---
+
+# Production Readiness
+
+The core RAG pipeline and frontend experience are complete.
+
+The next development phase focuses on making the complete application deployable and production-ready.
+
+### Next
+
+- Docker
+- Docker Compose
+- Backend Containerization
+- Frontend Containerization
+- PostgreSQL Configuration
+- Environment Management
+- Production Configuration
+- Deployment Configuration
+- Reverse Proxy
+- CI/CD
+- Unit Tests
+- Integration Tests
+- Monitoring
+- Metrics
+- Health Checks
+- Rate Limiting
+- Prompt & LLM Performance Metrics
+- Performance Validation
 
 ---
 
 # Long-Term Vision
 
-The Knowledge Assistant is designed to become a provider-agnostic enterprise RAG platform capable of supporting:
+The Knowledge Assistant is designed as a provider-agnostic RAG platform capable of supporting:
 
 - Multiple document formats
 - Multiple parsing providers
@@ -441,5 +652,6 @@ The Knowledge Assistant is designed to become a provider-agnostic enterprise RAG
 - Multiple prompt providers
 - Multiple vector databases
 - Multiple Large Language Models
+- Multiple frontend deployment environments
 
-The architecture allows new providers and technologies to be introduced with minimal changes to the business workflow while maintaining a clean, modular, and extensible design.
+The architecture allows new providers and technologies to be introduced with minimal changes to the business workflow while maintaining a clean, modular, testable, and extensible design.

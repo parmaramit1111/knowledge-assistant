@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Knowledge Assistant backend is designed as a modular, enterprise-grade application following **Clean Architecture** principles.
+The Knowledge Assistant backend is designed as a modular application following **Clean Architecture** principles.
 
 The architecture separates business workflow, provider integrations, persistence, and infrastructure into well-defined layers to maximize maintainability, scalability, and extensibility.
 
@@ -17,6 +17,7 @@ The backend is built around the following architectural patterns:
 - Factory Pattern
 - Background Workers
 - Async First Design
+- Provider Independence
 
 ---
 
@@ -55,12 +56,14 @@ The backend is built around the following architectural patterns:
 - Exception Handling
 - Configuration
 - Dependency Management
+- Request Correlation ID
+- CORS
 
 ---
 
 # Design Principles
 
-The backend follows these principles.
+The backend follows these principles:
 
 - Clean Architecture
 - SOLID Principles
@@ -75,6 +78,8 @@ The backend follows these principles.
 - Single Responsibility Principle
 - Provider Independence
 
+The core business workflow remains independent of concrete infrastructure and provider implementations.
+
 ---
 
 # Project Structure
@@ -83,28 +88,27 @@ The backend follows these principles.
 backend/
 │
 ├── app/
+│   ├── api/
+│   ├── commands/
+│   ├── core/
+│   ├── dtos/
+│   ├── models/
+│   ├── providers/
+│   │   ├── parsers/
+│   │   ├── chunkers/
+│   │   ├── embeddings/
+│   │   ├── prompts/
+│   │   └── llm/
+│   ├── queries/
+│   ├── repositories/
+│   ├── schemas/
+│   ├── services/
+│   ├── workers/
+│   └── utils/
 │
-├── api/
-├── commands/
-├── core/
-├── dtos/
-├── models/
-├── providers/
-│   ├── parsers/
-│   ├── chunkers/
-│   ├── embeddings/
-│   ├── prompts/
-│   └── llm/
-├── queries/
-├── repositories/
-├── schemas/
-├── services/
-├── workers/
-└── utils/
-
-migrations/
-storage/
-tests/
+├── migrations/
+├── storage/
+└── tests/
 ```
 
 ---
@@ -115,7 +119,7 @@ tests/
 
 **Location**
 
-```
+```text
 app/api/
 ```
 
@@ -125,6 +129,7 @@ app/api/
 - Validate requests
 - Return standardized responses
 - Execute Commands or Queries
+- Handle HTTP-specific concerns
 
 Controllers never contain business logic.
 
@@ -134,11 +139,13 @@ Controllers never contain business logic.
 
 **Location**
 
-```
+```text
 app/core/execution/
 ```
 
-ExecutionContext manages the lifecycle of an HTTP request or background task by creating repositories, services and a database session for each execution scope.
+ExecutionContext manages the lifecycle of an HTTP request or background task by creating repositories, services, and a database session for each execution scope.
+
+It provides a consistent execution boundary for both synchronous API operations and background processing.
 
 ---
 
@@ -146,7 +153,7 @@ ExecutionContext manages the lifecycle of an HTTP request or background task by 
 
 **Location**
 
-```
+```text
 app/commands/
 ```
 
@@ -167,7 +174,7 @@ Commands coordinate business workflows and never contain persistence logic.
 
 **Location**
 
-```
+```text
 app/queries/
 ```
 
@@ -212,7 +219,7 @@ Workflow services orchestrate business processes and coordinate repositories and
 - PromptBuilderService
 - LLMService
 
-Provider services encapsulate provider-specific logic and never perform persistence.
+Provider services encapsulate provider-specific execution and transformations and never perform persistence.
 
 ---
 
@@ -220,13 +227,13 @@ Provider services encapsulate provider-specific logic and never perform persiste
 
 **Location**
 
-```
+```text
 app/providers/
 ```
 
-### Current Providers
+## Current Providers
 
-#### Document Parsers
+### Document Parsers
 
 - PDF Parser
 - Word Parser
@@ -234,36 +241,41 @@ app/providers/
 - Markdown Parser
 - Text Parser
 
-#### Chunkers
+### Chunkers
 
 - Recursive Character Splitter
 
-#### Embeddings
+### Embeddings
 
 - Sentence Transformers (`all-MiniLM-L6-v2`)
 
-#### Prompts
+### Prompts
 
 - Default Prompt Provider
 
-#### Large Language Models
+### Large Language Models
 
 - Ollama (`qwen2.5:1.5b`)
 
-### Future Providers
+---
 
-#### Embeddings
+# Future Provider Options
+
+The provider architecture allows additional implementations to be introduced without changing the core business workflow.
+
+### Embeddings
 
 - Ollama Embeddings
 - OpenAI Embeddings
 
-#### Prompts
+### Prompts
 
 - Technical Support Prompt
 - FAQ Prompt
 - Customer Support Prompt
+- Custom Prompt Templates
 
-#### LLMs
+### LLMs
 
 - OpenAI
 - Anthropic
@@ -323,7 +335,7 @@ Anthropic (Future)
 Gemini (Future)
 ```
 
-Business workflow never depends on concrete provider implementations.
+Business workflows never depend directly on concrete provider implementations.
 
 ---
 
@@ -331,7 +343,7 @@ Business workflow never depends on concrete provider implementations.
 
 **Location**
 
-```
+```text
 app/repositories/
 ```
 
@@ -351,7 +363,7 @@ Repositories remain responsible only for data access and never contain business 
 
 **Location**
 
-```
+```text
 app/models/
 ```
 
@@ -363,7 +375,7 @@ Models represent persistence entities and are never exposed directly through the
 
 **Location**
 
-```
+```text
 app/schemas/
 ```
 
@@ -383,22 +395,21 @@ Controller
 ExecutionContext
     │
     ▼
-Command
+Command / Query
     │
     ▼
 Workflow Service
     │
-    ▼
-Provider Service
-    │
-    ▼
-Provider
-    │
-    ▼
-Repository
-    │
-    ▼
-API Response
+    ├───────────────┐
+    ▼               ▼
+Provider Service  Repository
+    │               │
+    ▼               ▼
+ Provider        Database
+    │               │
+    └───────┬───────┘
+            ▼
+       API Response
 ```
 
 ---
@@ -418,6 +429,12 @@ AskQuestionCommand
 DocumentChatService
       │
       ├────────► DocumentSearchService
+      │               │
+      │               ▼
+      │         Query Embedder
+      │               │
+      │               ▼
+      │         Semantic Search
       │
       ├────────► PromptBuilderService
       │               │
@@ -437,11 +454,16 @@ DocumentChatService
                       │
                       ▼
                  Grounded Response
+                      │
+                      ▼
+                Source References
 ```
 
 ---
 
 # Background Processing
+
+Long-running document processing operations execute asynchronously.
 
 ```text
 Scheduler
@@ -460,6 +482,9 @@ Workflow Service
     │
     ▼
 Provider Service
+    │
+    ▼
+Provider
     │
     ▼
 Repository
@@ -489,6 +514,10 @@ Each worker processes documents independently using its own ExecutionContext and
 
 - SQLAlchemy Async
 
+### Migration
+
+- Alembic
+
 ### Features
 
 - UUID Primary Keys
@@ -496,6 +525,7 @@ Each worker processes documents independently using its own ExecutionContext and
 - Connection Pooling
 - Vector Embeddings
 - Cosine Similarity Search
+- Transactional Processing
 
 ---
 
@@ -531,6 +561,58 @@ Grounded AI Response
 
 ---
 
+# Frontend Integration
+
+The React frontend communicates with the backend through a dedicated API layer.
+
+```text
+React UI
+    │
+    ▼
+Custom Hook
+    │
+    ▼
+API Service
+    │
+    ▼
+FastAPI
+    │
+    ▼
+Application Services
+```
+
+### Current Frontend Integrations
+
+```text
+Chat UI
+    │
+    ▼
+useChat
+    │
+    ▼
+Chat API
+    │
+    ▼
+POST /api/v1/chat
+```
+
+```text
+Document Upload UI
+    │
+    ▼
+useDocumentUpload
+    │
+    ▼
+Document API
+    │
+    ▼
+POST /api/v1/documents/upload
+```
+
+CORS is configured on the backend to allow browser-based communication with the frontend during development and deployment.
+
+---
+
 # Provider Independence
 
 ### Parsers
@@ -549,8 +631,8 @@ Grounded AI Response
 ### Embeddings
 
 - Sentence Transformers
-- Ollama
-- OpenAI
+- Ollama (Future)
+- OpenAI (Future)
 
 ### Prompts
 
@@ -560,18 +642,48 @@ Grounded AI Response
 ### Vector Databases
 
 - PostgreSQL (pgvector)
-- ChromaDB
-- Milvus
-- Qdrant
+- ChromaDB (Future)
+- Milvus (Future)
+- Qdrant (Future)
 
 ### Large Language Models
 
 - Ollama
-- OpenAI
-- Anthropic
-- Gemini
+- OpenAI (Future)
+- Anthropic (Future)
+- Gemini (Future)
+- Azure OpenAI (Future)
 
-Adding a new provider requires no changes to business workflows.
+Adding a new provider should require changes only within the provider abstraction and configuration layers without changing the core business workflows.
+
+---
+
+# Production Readiness
+
+The core backend RAG pipeline and frontend experience are complete.
+
+The next phase focuses on deployment and production readiness.
+
+### Next
+
+- Docker
+- Docker Compose
+- Backend Containerization
+- Frontend Containerization
+- PostgreSQL Configuration
+- Environment Management
+- Production Configuration
+- Deployment Configuration
+- Reverse Proxy
+- CI/CD
+- Unit Tests
+- Integration Tests
+- Monitoring
+- Metrics
+- Health Checks
+- Rate Limiting
+- Prompt & LLM Performance Metrics
+- Performance Validation
 
 ---
 
@@ -584,6 +696,8 @@ The architecture is designed to remain:
 - Provider Independent
 - Testable
 - Maintainable
-- Enterprise Ready
 - Cloud Ready
 - AI Ready
+- Deployment Ready
+
+The project intentionally focuses on demonstrating strong **RAG engineering, clean architecture, provider independence, full-stack integration, and production deployment practices** without coupling the core application to a specific infrastructure provider.
