@@ -1,3 +1,4 @@
+````markdown
 # Backend Architecture
 
 ## Overview
@@ -41,13 +42,14 @@ The backend is built around the following architectural patterns:
           ┌──────────────┴──────────────┐
           ▼                             ▼
   Provider Service               Repository
-          │
-          ▼
-    Provider Factory
+          │                             │
+          ▼                             ▼
+    Provider Factory               Database
           │
           ▼
         Provider
 ```
+````
 
 ### Cross-cutting Concerns
 
@@ -502,9 +504,9 @@ Each worker processes documents independently using its own ExecutionContext and
 
 # Database
 
-### Database
+### Production Database
 
-- PostgreSQL 18
+- AWS RDS PostgreSQL 18
 
 ### Extensions
 
@@ -526,6 +528,80 @@ Each worker processes documents independently using its own ExecutionContext and
 - Vector Embeddings
 - Cosine Similarity Search
 - Transactional Processing
+
+The production database is managed outside the application containers.
+
+---
+
+# Document Storage
+
+## Development
+
+Local development supports filesystem-based storage:
+
+```text
+backend/storage/
+```
+
+This storage is intended for development and testing only.
+
+## Production
+
+Production document storage uses a **private AWS S3 bucket**.
+
+```text
+FastAPI
+    │
+    ▼
+Storage Service
+    │
+    ▼
+S3 Storage Provider
+    │
+    ▼
+Private AWS S3 Bucket
+```
+
+The application containers should not be used for persistent document storage.
+
+The S3 bucket should use:
+
+- Block Public Access
+- Server-side encryption
+- IAM-based access
+- Restricted bucket permissions
+
+Application access to private documents should be controlled through backend authorization and short-lived access mechanisms where required.
+
+---
+
+# LLM Runtime
+
+The LLM runtime is intentionally separated from the core application deployment.
+
+```text
+LLMService
+    │
+    ▼
+LLMFactory
+    │
+    ├── OllamaProvider
+    ├── OpenAIProvider
+    ├── AnthropicProvider
+    └── GeminiProvider
+```
+
+Ollama is an optional external runtime and is not required to run as part of the core application Compose stack.
+
+This allows each deployment to select an appropriate LLM based on:
+
+- Client requirements
+- Model quality
+- Context requirements
+- CPU/GPU resources
+- Infrastructure cost
+
+For Ollama deployments, the selected model is provisioned separately from the application.
 
 ---
 
@@ -613,6 +689,37 @@ CORS is configured on the backend to allow browser-based communication with the 
 
 ---
 
+# Deployment Architecture
+
+```text
+                    Internet
+                       │
+                       ▼
+              ┌─────────────────┐
+              │ React + Nginx   │
+              │    Frontend     │
+              └────────┬────────┘
+                       │
+                       ▼
+              ┌─────────────────┐
+              │    FastAPI      │
+              │    Backend      │
+              └────┬────────────┘
+                   │
+          ┌────────┼─────────┐
+          ▼        ▼         ▼
+   ┌────────────┐ ┌────────┐ ┌──────────────┐
+   │ AWS RDS    │ │Private │ │ LLM Provider │
+   │ PostgreSQL │ │ S3     │ │              │
+   │ + pgvector │ │Documents│ │ Ollama /     │
+   └────────────┘ └────────┘ │ OpenAI / ... │
+                              └──────────────┘
+```
+
+The application containers are designed to remain stateless while persistent data is managed by AWS services.
+
+---
+
 # Provider Independence
 
 ### Parsers
@@ -662,25 +769,32 @@ Adding a new provider should require changes only within the provider abstractio
 
 The core backend RAG pipeline and frontend experience are complete.
 
-The next phase focuses on deployment and production readiness.
+### Completed
 
-### Next
+- Docker Backend Configuration
+- Docker Frontend Configuration
+- Nginx Configuration
+- Docker Compose Configuration
+- AWS RDS Architecture
+- Private S3 Architecture
+- Separate LLM Runtime Architecture
+- Database Migration Script
+- Health Check Script
+- Local Development Setup Scripts
 
-- Docker
-- Docker Compose
-- Backend Containerization
-- Frontend Containerization
-- PostgreSQL Configuration
-- Environment Management
-- Production Configuration
-- Deployment Configuration
-- Reverse Proxy
+### In Progress
+
+- S3 Storage Provider
+- Production Environment Configuration
+- Deployment Validation
+
+### Planned
+
 - CI/CD
 - Unit Tests
 - Integration Tests
 - Monitoring
 - Metrics
-- Health Checks
 - Rate Limiting
 - Prompt & LLM Performance Metrics
 - Performance Validation

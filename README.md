@@ -8,23 +8,23 @@ The platform enables users to upload documents, build an intelligent knowledge b
 
 # Vision
 
-The goal of this project is to build a production-ready Knowledge Assistant platform that:
+The goal of this project is to demonstrate a clean, modular, provider-agnostic RAG architecture that showcases:
 
-- Supports multiple document formats
-- Builds semantic knowledge from uploaded documents
-- Generates vector embeddings
-- Performs semantic similarity search
-- Retrieves relevant context for AI applications
-- Produces grounded AI responses
-- Supports multiple parsing providers
-- Supports multiple chunking strategies
-- Supports multiple embedding providers
-- Supports multiple prompt providers
-- Supports multiple Large Language Models (LLMs)
-- Supports multiple vector databases
-- Remains modular and provider independent
+- Multiple document formats
+- Document parsing
+- Document chunking
+- Vector embeddings
+- Semantic similarity search
+- Context retrieval
+- Grounded AI responses
+- Provider abstraction
+- Prompt provider architecture
+- LLM provider architecture
+- Vector database integration
+- Clean Architecture principles
+- Full-stack integration
 
-The architecture follows **Clean Architecture** principles, where every processing stage has a single responsibility and can evolve independently.
+Every processing stage has a single responsibility and can evolve independently.
 
 ---
 
@@ -99,8 +99,10 @@ The architecture follows **Clean Architecture** principles, where every processi
 - Document Chat Service
 - Prompt Builder Service
 - Prompt Provider Architecture
+- Prompt Factory
 - Default Prompt Provider
 - LLM Provider Architecture
+- LLM Factory
 - Ollama Provider
 - Prompt Generation
 - Context Injection
@@ -131,31 +133,9 @@ The architecture follows **Clean Architecture** principles, where every processi
 
 ---
 
-## 🚧 In Progress
-
-- Conversation History
-- Response Streaming
-- Hybrid Search
-- Re-ranking
-- Retrieval Optimization
-
----
-
-## 📋 Next
-
-- Docker
-- Local Development Environment
-- Production Configuration
-- Deployment Configuration
-- CI/CD
-- Monitoring
-- Performance Validation
-
----
-
 # Processing Pipeline
 
-The backend currently implements the following Retrieval-Augmented Generation (RAG) pipeline.
+The Knowledge Assistant implements the following Retrieval-Augmented Generation pipeline.
 
 ```text
 Upload Document
@@ -207,9 +187,9 @@ Grounded AI Response
           ┌──────────────┴──────────────┐
           ▼                             ▼
   Provider Service               Repository
-          │
-          ▼
-    Provider Factory
+          │                             │
+          ▼                             ▼
+    Provider Factory               PostgreSQL
           │
           ▼
         Provider
@@ -219,7 +199,7 @@ Grounded AI Response
 
 # Background Processing
 
-Long-running operations execute asynchronously.
+Long-running document processing operations execute asynchronously.
 
 ```text
 Scheduler
@@ -240,6 +220,9 @@ Workflow Service
 Provider Service
         │
         ▼
+Provider
+        │
+        ▼
 Repository
 ```
 
@@ -249,7 +232,7 @@ Repository
 - ChunkWorker
 - EmbeddingWorker
 
-Each worker processes documents independently, providing isolated transactions and failure recovery.
+Each worker processes documents independently using its own execution context and transaction boundary.
 
 ---
 
@@ -274,8 +257,6 @@ Each worker processes documents independently, providing isolated transactions a
 
 ## AI
 
-### Current
-
 - LangChain Recursive Character Text Splitter
 - Sentence Transformers (`all-MiniLM-L6-v2`)
 - PostgreSQL + pgvector
@@ -284,17 +265,9 @@ Each worker processes documents independently, providing isolated transactions a
 - Prompt Provider Architecture
 - LLM Provider Architecture
 
-### Planned
-
-- OpenAI
-- Anthropic
-- Gemini
-
 ---
 
 # Supported Document Formats
-
-### Current
 
 - PDF
 - DOCX
@@ -302,12 +275,7 @@ Each worker processes documents independently, providing isolated transactions a
 - HTML
 - Markdown
 
-### Future
-
-- OCR
-- Images
-- Excel
-- PowerPoint
+The parser architecture allows additional document formats to be introduced without changing the core processing workflow.
 
 ---
 
@@ -357,7 +325,7 @@ knowledge-assistant/
 
 # Design Principles
 
-The project follows these architectural principles.
+The project follows these architectural principles:
 
 - Clean Architecture
 - SOLID Principles
@@ -415,43 +383,53 @@ Additional documentation is available in the `docs/` directory.
 - `decisions.md`
 - `api.md`
 - `setup.md`
+- `deployment.md`
 
 ---
 
-# Roadmap
+# Project Scope
 
-| Phase                    | Status         |
-| ------------------------ | -------------- |
-| Backend Foundation       | ✅ Completed   |
-| Document Processing      | ✅ Completed   |
-| Document Chunking        | ✅ Completed   |
-| Document Embeddings      | ✅ Completed   |
-| Semantic Search          | ✅ Completed   |
-| Prompt Builder           | ✅ Completed   |
-| RAG Chat Pipeline        | ✅ Completed   |
-| Frontend Chat UI         | ✅ Completed   |
-| Document Upload UI       | ✅ Completed   |
-| Conversation Memory      | 🚧 In Progress |
-| Production Configuration | 📋 Next        |
-| Deployment               | 📋 Next        |
-| CI/CD                    | 📋 Next        |
-| Monitoring               | 📋 Next        |
-
----
-
-# Project Direction
-
-The public project currently focuses on demonstrating the core capabilities of the Knowledge Assistant:
+The project focuses on demonstrating the core engineering capabilities required to design and implement a modern RAG application:
 
 - Document ingestion
 - Document processing
+- Document chunking
+- Embedding generation
+- Vector storage
 - Semantic retrieval
 - Prompt construction
-- Grounded AI generation
+- LLM integration
+- Grounded responses
+- Source attribution
 - Provider-independent architecture
-- Full-stack chat experience
+- Background processing
+- Clean backend architecture
+- Full-stack React integration
+- Document upload experience
+- Chat interface
+- Technical documentation
 
-Advanced enterprise capabilities are intentionally kept outside the current public implementation.
+The project is intentionally maintained as a **RAG engineering showcase and reference implementation**, rather than being extended into a production SaaS platform.
+
+---
+
+# Project Completion
+
+The core showcase implementation is complete.
+
+```text
+Backend Foundation        ✅
+Document Processing       ✅
+Document Chunking         ✅
+Embedding Pipeline        ✅
+Semantic Search           ✅
+Prompt Builder            ✅
+AI Chat (RAG)             ✅
+Frontend Experience       ✅
+Technical Documentation   ✅
+```
+
+The architecture can serve as the foundation for a separate private production RAG implementation when production infrastructure and operational requirements are needed.
 
 ---
 
