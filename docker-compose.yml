@@ -1,0 +1,60 @@
+services:
+
+  # ============================================================
+  # Backend - FastAPI
+  # ============================================================
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+
+    container_name: knowledge-assistant-backend
+
+    restart: unless-stopped
+
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://host.docker.internal:11434}
+
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+
+    volumes:
+      - backend_storage:/app/storage
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+
+  # ============================================================
+  # Frontend - React + Nginx
+  # ============================================================
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+
+    container_name: knowledge-assistant-frontend
+
+    restart: unless-stopped
+
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+
+    depends_on:
+      - backend
+
+
+# ==============================================================
+# Persistent Volumes
+# ==============================================================
+
+volumes:
+
+  backend_storage:
+    name: knowledge-assistant-backend-storage
