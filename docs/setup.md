@@ -1,155 +1,173 @@
 # Development Setup
 
-## Requirements
+## Overview
+
+This guide explains how to set up the Knowledge Assistant development environment locally.
+
+The project consists of:
+
+- **FastAPI** backend
+- **React + TypeScript + Vite** frontend
+- **PostgreSQL + pgvector** database
+- **Ollama or another supported LLM provider**
+- **AWS S3** for production document storage
+
+The local development environment does **not require Docker**. Docker is used for containerized deployment and production readiness.
+
+---
+
+# Requirements
+
+Install the following tools:
 
 - Python 3.12+
-- PostgreSQL
-- Git
-
-## Clone
-
-git clone ...
-
-## Create Virtual Environment
-
-python -m venv .venv
-
-source .venv/bin/activate
-
-## Install Dependencies
-
-pip install -r requirements.txt
-
-## Environment Variables
-
-cp .env.example .env
-
-Update:
-
-DATABASE_URL
-OPENAI_API_KEY
-...
-
-## Database
-
-alembic upgrade head
-
-## Run
-
-uvicorn app.main:app --reload
-
-## Background Worker
-
-python -m app.workers.scheduler
-
-## API Documentation
-
-http://localhost:8000/docs
-
-# Frontend Development Setup
-
-## Requirements
-
 - Node.js 20+
-- npm 10+
+- npm
+- PostgreSQL with pgvector
 - Git
-- Backend API running locally
 
-## Frontend Structure
+Optional:
 
-```text
-frontend/
-├── public/
-│   └── assets/
-│       └── logo/
-├── src/
-│   ├── api/
-│   │   ├── models/
-│   │   ├── chat.ts
-│   │   └── document.ts
-│   ├── components/
-│   │   ├── chat/
-│   │   ├── common/
-│   │   └── documents/
-│   ├── hooks/
-│   │   ├── useChat.ts
-│   │   └── useDocumentUpload.ts
-│   ├── pages/
-│   │   └── ChatPage.tsx
-│   ├── App.tsx
-│   ├── main.tsx
-│   └── theme.ts
-├── index.html
-├── package.json
-├── tsconfig.json
-└── vite.config.ts
-```
+- Ollama
+- Docker
 
-## Install Dependencies
+> Docker is not required for normal local development.
 
-From the repository root:
+---
+
+# Clone the Repository
 
 ```bash
-cd frontend
+git clone <repository-url>
+
+cd knowledge-assistant
+```
+
+---
+
+# Automated Setup
+
+The project provides a setup script that prepares the backend and frontend development environments.
+
+```bash
+./scripts/setup.sh
+```
+
+The script:
+
+- Creates `backend/.venv`
+- Installs backend dependencies
+- Creates `backend/.env` from `.env.example` when available
+- Creates local backend storage
+- Installs frontend dependencies
+- Creates frontend environment configuration when available
+
+---
+
+# Backend Setup
+
+If you prefer to configure the backend manually:
+
+```bash
+cd backend
+```
+
+Create a virtual environment:
+
+```bash
+python3 -m venv .venv
+```
+
+Activate it:
+
+### macOS / Linux
+
+```bash
+source .venv/bin/activate
+```
+
+### Windows
+
+```powershell
+.venv\Scripts\activate
 ```
 
 Install dependencies:
 
 ```bash
-npm install
+pip install -r requirements.txt
 ```
 
-## Environment Variables
+---
 
-Create a local environment file:
+# Backend Environment Variables
+
+Create the environment file:
 
 ```bash
-touch .env
+cp .env.example .env
 ```
 
-Add:
+Configure the required values.
+
+Example:
 
 ```env
-VITE_API_BASE_URL=http://localhost:8000/api/v1
+DATABASE_URL=postgresql+asyncpg://username:password@localhost:5432/knowledge_assistant
+
+ENVIRONMENT=development
+
+OLLAMA_BASE_URL=http://localhost:11434
 ```
 
-The frontend reads the API base URL using Vite's environment variable system:
+The exact variables should follow the current `backend/.env.example`.
 
-```typescript
-import.meta.env.VITE_API_BASE_URL;
+**Do not commit `.env` files containing secrets.**
+
+---
+
+# Database
+
+The application uses:
+
+- PostgreSQL
+- pgvector
+- SQLAlchemy Async
+- Alembic
+
+Configure the database connection through:
+
+```env
+DATABASE_URL=...
 ```
 
-If `VITE_API_BASE_URL` is not configured, the application falls back to:
-
-```text
-/api/v1
-```
-
-## Start Development Server
+Run migrations:
 
 ```bash
-npm run dev
+./scripts/migrate.sh
 ```
 
-The Vite development server will normally be available at:
-
-```text
-http://localhost:5173
-```
-
-## Backend
-
-Start the FastAPI backend separately:
+Or manually:
 
 ```bash
 cd backend
 
-source .venv/bin/activate
-
-uvicorn app.main:app --reload
+.venv/bin/python -m alembic upgrade head
 ```
 
-Backend API:
+---
+
+# Backend
+
+Start FastAPI manually:
+
+```bash
+cd backend
+
+.venv/bin/python -m uvicorn app.main:app --reload
+```
+
+The backend will be available at:
 
 ```text
 http://localhost:8000
@@ -161,144 +179,396 @@ API documentation:
 http://localhost:8000/docs
 ```
 
-## CORS
+Health endpoint:
 
-The backend must allow the frontend development origin.
+```text
+http://localhost:8000/api/v1/health
+```
 
-For local development, the backend should allow:
+---
+
+# Frontend Setup
+
+```bash
+cd frontend
+```
+
+Install dependencies:
+
+```bash
+npm ci
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+The frontend will normally be available at:
 
 ```text
 http://localhost:5173
 ```
 
-CORS configuration belongs to the backend and is required for browser-based communication between the React frontend and FastAPI API.
+---
 
-## Build
+# Frontend Environment
 
-Create a production build:
+The frontend uses Vite environment variables.
 
-```bash
-npm run build
+Example:
+
+```env
+VITE_API_BASE_URL=http://localhost:8000/api/v1
 ```
 
-The build performs TypeScript compilation and Vite production bundling.
+Only variables prefixed with `VITE_` are exposed to the frontend application.
 
-## TypeScript Validation
+Do not put secrets or private credentials in frontend environment variables.
 
-Run TypeScript validation independently:
+---
 
-```bash
-npx tsc -b
-```
+# Start Full Development Environment
 
-## Preview Production Build
-
-After building:
+The project provides a convenience script for starting both applications:
 
 ```bash
-npm run preview
+./scripts/start.sh
 ```
 
-The production build can then be previewed locally using the Vite preview server.
-
-## API Integration
-
-The frontend communicates with the backend through the API layer:
+This starts:
 
 ```text
-React Component
-       │
-       ▼
-Hook
-       │
-       ▼
-API Service
-       │
-       ▼
+React / Vite
+    │
+    │ :5173
+    ▼
 FastAPI
-       │
-       ▼
-PostgreSQL / RAG Pipeline
+    │
+    │ :8000
+    ▼
+PostgreSQL + pgvector
 ```
 
-### Current API Services
+The script also provides:
 
 ```text
-src/api/
-├── chat.ts
-└── document.ts
+Frontend:
+http://localhost:5173
+
+Backend:
+http://localhost:8000
+
+API Documentation:
+http://localhost:8000/docs
+
+Health:
+http://localhost:8000/api/v1/health
 ```
 
-### Current APIs
+Press:
 
-```http
-POST /api/v1/chat
+```text
+Ctrl+C
 ```
 
-```http
-POST /api/v1/documents/upload
+to stop the development services.
+
+---
+
+# Ollama
+
+Ollama is an optional local LLM runtime.
+
+If using Ollama locally, configure:
+
+```env
+OLLAMA_BASE_URL=http://localhost:11434
 ```
 
-## Current Frontend Features
+The application uses the LLM provider architecture, so Ollama is not required to be part of the core application deployment.
 
-- Chat interface
-- Conversation state
-- New Chat
-- Source references
-- PDF upload
-- Drag-and-drop PDF upload
-- Upload success/error handling
-- Sidebar navigation
-- Collapsible sidebar
-- Material UI theme
-- Knowledge Assistant branding
+The selected model is configured independently.
 
-## Development Workflow
+Example:
 
-Before committing frontend changes:
+```env
+LLM_PROVIDER=ollama
+LLM_MODEL=qwen2.5:1.5b
+```
+
+Model selection should be based on the deployment requirements and available resources.
+
+---
+
+# Document Storage
+
+## Development
+
+Local development currently supports local storage:
+
+```text
+backend/storage/
+```
+
+The storage directory is intended for development and testing.
+
+Reset local storage:
 
 ```bash
-npm run build
+./scripts/reset_storage.sh --force
 ```
 
-Then verify the working tree:
-
-```bash
-git status
-```
-
-Review changes:
-
-```bash
-git diff
-```
-
-Commit changes:
-
-```bash
-git add frontend/
-git commit -m "feat(frontend): ..."
-```
-
-Push the current feature branch:
-
-```bash
-git push
-```
+This only removes files from the local storage directory. It does not remove database records.
 
 ## Production
 
-Production deployment configuration is intentionally not covered yet.
+Production document storage is planned to use:
 
-The next development phase will cover:
+```text
+AWS S3
+```
+
+with a private bucket and restricted IAM permissions.
+
+Production storage should not rely on the container filesystem.
+
+---
+
+# Docker
+
+Docker is supported for containerized deployment.
+
+The project contains:
+
+```text
+backend/Dockerfile
+frontend/Dockerfile
+frontend/nginx.conf
+docker-compose.yml
+```
+
+Docker is **not required for local development**.
+
+The Docker configuration is intended to provide reproducible application builds for deployment and CI/CD.
+
+---
+
+# Docker Architecture
+
+The current Compose architecture contains:
+
+```text
+Frontend
+React + Nginx
+       │
+       ▼
+Backend
+FastAPI
+       │
+       ├──────────────► AWS RDS PostgreSQL
+       │                    │
+       │                    └── pgvector
+       │
+       └──────────────► LLM Provider
+                            │
+                            ├── Ollama
+                            ├── OpenAI
+                            ├── Anthropic
+                            └── Gemini
+```
+
+PostgreSQL is **not required to run as a Docker service** for the intended deployment architecture.
+
+The production database is expected to use AWS RDS PostgreSQL with pgvector.
+
+---
+
+# Database Migrations
+
+All schema changes must be handled through Alembic migrations.
+
+Create a migration:
+
+```bash
+cd backend
+
+.venv/bin/python -m alembic revision --autogenerate -m "describe change"
+```
+
+Review the generated migration before applying it.
+
+Apply migrations:
+
+```bash
+./scripts/migrate.sh
+```
+
+Never modify an already-applied migration in a shared environment.
+
+---
+
+# Health Check
+
+Run:
+
+```bash
+./scripts/health-check.sh
+```
+
+By default, the script checks:
+
+```text
+http://localhost:8000/api/v1/health
+```
+
+A different backend can be checked with:
+
+```bash
+BACKEND_URL=https://api.example.com ./scripts/health-check.sh
+```
+
+---
+
+# Project Scripts
+
+| Script                     | Purpose                               |
+| -------------------------- | ------------------------------------- |
+| `scripts/setup.sh`         | Prepare local development environment |
+| `scripts/start.sh`         | Start frontend and backend locally    |
+| `scripts/migrate.sh`       | Run Alembic database migrations       |
+| `scripts/health-check.sh`  | Verify backend health                 |
+| `scripts/reset_storage.sh` | Reset local development storage       |
+
+---
+
+# Testing
+
+Backend tests:
+
+```bash
+cd backend
+
+.venv/bin/python -m pytest
+```
+
+Frontend production build:
+
+```bash
+cd frontend
+
+npm run build
+```
+
+TypeScript validation:
+
+```bash
+cd frontend
+
+npx tsc -b
+```
+
+---
+
+# API Documentation
+
+When the backend is running:
+
+```text
+http://localhost:8000/docs
+```
+
+FastAPI also provides the OpenAPI schema through the application.
+
+---
+
+# Development Workflow
+
+Recommended development workflow:
+
+```text
+Pull latest changes
+        │
+        ▼
+Create feature branch
+        │
+        ▼
+Run setup if required
+        │
+        ▼
+Start application
+        │
+        ▼
+Implement change
+        │
+        ▼
+Run tests
+        │
+        ▼
+Run frontend build/type check
+        │
+        ▼
+Run health check
+        │
+        ▼
+Commit changes
+        │
+        ▼
+Push branch
+        │
+        ▼
+Create Pull Request
+```
+
+---
+
+# Environment Separation
+
+The application should maintain separate configuration for different environments:
+
+```text
+Development
+    │
+    ├── Local PostgreSQL / development RDS
+    ├── Local storage
+    └── Optional local Ollama
+
+Staging
+    │
+    ├── AWS RDS
+    ├── Private S3
+    └── Configured LLM provider
+
+Production
+    │
+    ├── AWS RDS + pgvector
+    ├── Private S3
+    └── Client-selected LLM provider
+```
+
+Secrets must be supplied through the environment or an appropriate secrets-management mechanism and must never be committed to Git.
+
+---
+
+# Production Deployment
+
+Production deployment is documented separately in:
+
+```text
+docs/deployment.md
+```
+
+The production deployment documentation will cover:
 
 - Docker
-- Frontend containerization
-- Backend containerization
-- PostgreSQL configuration
-- Environment management
-- Production API configuration
-- Reverse proxy
-- Deployment
+- AWS infrastructure
+- RDS
+- S3
+- LLM runtime
+- Environment configuration
 - CI/CD
+- Application deployment
+- Security
 - Monitoring
+- Health checks
